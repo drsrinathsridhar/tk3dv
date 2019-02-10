@@ -1,22 +1,35 @@
-import PyQt5.QtCore as QtCore
-import GLViewer as glv
+import sys
+sys.path.append('./')
+from EaselModule import EaselModule
+from PyQt5.QtGui import QKeyEvent, QMouseEvent, QWheelEvent
 import threading
 from time import sleep
-from common import utilities
-from PyQt5.QtGui import QKeyEvent, QMouseEvent, QWheelEvent
+from tk3dv.common import utilities
+import GLViewer as glv
+import PyQt5.QtCore as QtCore
+
+class TestModule(EaselModule, argv=None):
+    def __init__(self, argv=None):
+        super().__init__()
+
+    def init(self):
+        #print('One-time initialization before startup happens here.')
+        pass
+
+    def step(self):
+        #print('Step.')
+        pass
+
+    def draw(self):
+        #print('OpenGL drawing.')
+        pass
 
 # Some code to manage the module
-class Easel(glv.GLViewer):
-    def __init__(self, OtherModules=[], argv=None):
+class TestModuleManager(glv.GLViewer):
+    def __init__(self):
         super().__init__()
-        self.setWindowTitle('pyEasel')
-        self.isRenderPlane = True
-        self.isRenderAxis = True
-
-        self.Modules = []
-        self.Modules.extend(OtherModules)
-        self.argv = argv
-
+        self.Module = TestModule()
+        # Add more modules if needed manually
         self.init()
 
     def init(self):
@@ -25,9 +38,8 @@ class Easel(glv.GLViewer):
         self.Mutex = threading.Lock()
         self.FPS = 0
 
-        print('[ INFO ]: Initializing all modules.')
-        for Mod in self.Modules:
-            Mod.init(self.argv)
+        self.Module.init()
+        # Add more modules if needed manually
 
         # Start step() thread
         self.StepThread = threading.Thread(target=self.start, args=(1,))
@@ -43,10 +55,8 @@ class Easel(glv.GLViewer):
 
     def stepAll(self):
         startTime = utilities.getCurrentEpochTime()
-
-        for Mod in self.Modules:
-            Mod.step()
-
+        self.Module.step()
+        # Add more modules if needed
         endTime = utilities.getCurrentEpochTime()
         ElapsedTime = (endTime - startTime)
 
@@ -55,8 +65,6 @@ class Easel(glv.GLViewer):
             ElapsedTime += 1000
 
         self.FPS = 1e6 / (ElapsedTime)
-
-        # self.update() # A bit hacky to force draw call after step
 
     def stop(self):
         self.Mutex.acquire()
@@ -72,40 +80,24 @@ class Easel(glv.GLViewer):
         self.Mutex.release()
 
     def moduleDraw(self):
-        for Mod in self.Modules:
-            Mod.draw()
+        self.Module.draw()
 
     def keyPressEvent(self, a0: QKeyEvent):
         if(a0.key() == QtCore.Qt.Key_Escape):
             self.stop()
-            for Mod in self.Modules:
-                Mod.__del__()
 
         super().keyPressEvent(a0)
-        for Mod in self.Modules:
-            Mod.keyPressEvent(a0)
-        self.update()
 
     def mousePressEvent(self, a0: QMouseEvent):
         super().mousePressEvent(a0)
-        for Mod in self.Modules:
-            Mod.mousePressEvent(a0)
-        self.update()
+        # Implement class-specific functionality here
 
     def mouseReleaseEvent(self, a0: QMouseEvent):
         super().mouseReleaseEvent(a0)
-        for Mod in self.Modules:
-            Mod.mouseReleaseEvent(a0)
-        self.update()
+        # Implement class-specific functionality here
 
     def mouseMoveEvent(self, a0: QMouseEvent):
         super().mouseMoveEvent(a0)
-        for Mod in self.Modules:
-            Mod.mouseMoveEvent(a0)
-        self.update()
 
     def wheelEvent(self, a0: QWheelEvent):
         super().wheelEvent(a0)
-        for Mod in self.Modules:
-            Mod.wheelEvent(a0)
-        self.update()

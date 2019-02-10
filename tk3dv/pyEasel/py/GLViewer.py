@@ -1,16 +1,15 @@
+import math
+
 import OpenGL.GL as gl
 import OpenGL.GLU as glu
-
+import PyQt5.QtCore as QtCore
+import numpy as np
 from PyQt5.QtCore import QPoint
 from PyQt5.QtGui import QKeyEvent, QMouseEvent, QWheelEvent, QPainter
-from PyQt5.QtWidgets import QOpenGLWidget, QSizePolicy, QPushButton, QHBoxLayout
-import PyQt5.QtCore as QtCore
+from PyQt5.QtWidgets import QOpenGLWidget, QSizePolicy
 
-import numpy as np
-import math
-import time
+from tk3dv.common import drawing
 
-from common import drawing, utilities
 
 # This class is modeled after the GLViewer class in Easel
 # See https://github.com/drsrinathsridhar/Easel/blob/master/src/gui

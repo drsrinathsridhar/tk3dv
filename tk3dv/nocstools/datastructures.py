@@ -1,11 +1,13 @@
-import numpy as np
+import os
+import sys
+
 import OpenGL.GL as gl
 import OpenGL.arrays.vbo as glvbo
-import cv2, sys, os
-import sys, os
+import numpy as np
+
 FileDirPath = os.path.dirname(__file__)
 sys.path.append(os.path.join(FileDirPath, '..'))
-from common import drawing
+from tk3dv.common import drawing
 
 def backproject(DepthImage, Intrinsics, mask=None):
     OutPoints = np.zeros([0, 3])  # Each point is a row
