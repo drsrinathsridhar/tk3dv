@@ -12,9 +12,9 @@ from shutil import rmtree
 from setuptools import find_packages, setup, Command
 
 # Package meta-data.
-NAME = '3dvtk'
-DESCRIPTION = 'The 3D Vision Toolkit (3dvtk) is a toolkit consisting of a collection of tools for deep learning and 3D computer vision.'
-URL = 'https://github.com/drsrinathsridhar/3dvtk'
+NAME = 'tk3dv'
+DESCRIPTION = 'The Toolkit for 3D Vision (tk3dv) is a collection of tools for deep learning and 3D computer vision.'
+URL = 'https://github.com/drsrinathsridhar/tk3dv'
 EMAIL = 'ssrinath@cs.stanford.edu'
 AUTHOR = 'Srinath Sridhar'
 REQUIRES_PYTHON = '>=3.6.0'
@@ -22,12 +22,12 @@ VERSION = '0.1'
 
 # What packages are required for this module to be executed?
 REQUIRED = [
-    '3dvtk', '3dvtk.common'
+    'tk3dv', 'numpy==1.15.4', 'PyOpenGL==3.1.0'
 ]
 
 # What packages are optional?
 EXTRAS = {
-    '3dvtk.nocstools', '3dvtk.pyEasel',
+    # 'tk3dv.nocstools', 'tk3dv.pyEasel',
 }
 
 # The rest you shouldn't have to touch too much :)

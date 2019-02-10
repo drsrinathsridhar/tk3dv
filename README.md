@@ -1,5 +1,5 @@
-# 3dvtk
-The 3D Vision Toolkit (3dvtk) is a toolkit consisting of a collection of tools for deep learning and 3D computer vision.
+# tk3dv
+The Toolkit for 3D Vision (tk3dv) is a collection of tools for deep learning and 3D computer vision.
 
 ## Installation
-``pip install git+https://github.com/drsrinathsridhar/3dvtk.git``
+``pip install git+https://github.com/drsrinathsridhar/tk3dv.git``
