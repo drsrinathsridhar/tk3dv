@@ -1,5 +1,4 @@
-import sys
-sys.path.append('./')
+from tk3dv.pyEasel import *
 from EaselModule import EaselModule
 from PyQt5.QtGui import QKeyEvent, QMouseEvent, QWheelEvent
 import threading
