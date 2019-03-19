@@ -14,7 +14,7 @@ import ptNets
 
 class SimpleCAE(ptNets.ptNet):
     def __init__(self, Args=None, DataParallelDevs=None):
-        super().__init__(InputArgs=Args)
+        super().__init__(Args=Args)
         self.encoder = nn.Sequential(
             nn.Conv2d(1, 16, 3, stride=3, padding=1),  # b, 16, 10, 10
             nn.ReLU(True),

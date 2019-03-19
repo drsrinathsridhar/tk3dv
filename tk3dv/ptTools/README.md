@@ -11,11 +11,11 @@ ptNets contains a base class for neural network training that encapsulates autom
 Run the following code for a minimal MNIST example that uses ptUtils.
 
 Training:  
-`python MNIST.py --mode train --expt-name MNISTTest --input-dir <DIR_TO_DATA> --output-dir <OUTPUT_DIR>`
+`python examples/MNIST.py --mode train --expt-name MNISTTest --input-dir <DIR_TO_DATA> --output-dir <OUTPUT_DIR>`
 
 
 Testing:  
-`python MNIST.py --mode test --expt-name MNISTTest --input-dir <DIR_TO_DATA> --output-dir <OUTPUT_DIR>`
+`python examples/MNIST.py --mode test --expt-name MNISTTest --input-dir <DIR_TO_DATA> --output-dir <OUTPUT_DIR>`
 
 # Contact
 Srinath Sridhar  

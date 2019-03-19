@@ -1,14 +1,14 @@
 import torch
 from torch import nn
-from torch.utils.data import DataLoader
 from torchvision import transforms
 from torchvision.datasets import MNIST
-import numpy as np
 import matplotlib.pyplot as plt
 
 import sys, os, argparse
 
-sys.path.append(os.path.join(FileDirPath, './models'))
+FileDirPath = os.path.dirname(os.path.realpath(__file__))
+sys.path.append(os.path.join(FileDirPath, '../models'))
+sys.path.append(os.path.join(FileDirPath, '..'))
 
 import ptUtils, ptNets
 import CAE
@@ -56,9 +56,9 @@ if __name__ == '__main__':
         print(SampleNet)
 
         TrainDevice = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-        TrainData = MNISTSpecialDataset(root=SampleNet.Args.input_dir, train=True, download=True, transform=MNISTCAETrans)
+        TrainData = MNISTSpecialDataset(root=SampleNet.Config.Args.input_dir, train=True, download=True, transform=MNISTCAETrans)
         print('[ INFO ]: Data has', len(TrainData), 'samples.')
-        TrainDataLoader = torch.utils.data.DataLoader(TrainData, batch_size=SampleNet.Args.batch_size, shuffle=True, num_workers=4)
+        TrainDataLoader = torch.utils.data.DataLoader(TrainData, batch_size=SampleNet.Config.Args.batch_size, shuffle=True, num_workers=4)
 
         # Train
         SampleNet.train(TrainDataLoader, Objective=nn.MSELoss(), TrainDevice=TrainDevice)
@@ -68,7 +68,7 @@ if __name__ == '__main__':
         print(SampleNet)
 
         TestDevice = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-        TestData = MNISTSpecialDataset(root=SampleNet.Args.input_dir, train=False, download=True, transform=MNISTCAETrans)
+        TestData = MNISTSpecialDataset(root=SampleNet.Config.Args.input_dir, train=False, download=True, transform=MNISTCAETrans)
         print('[ INFO ]: Data has', len(TestData), 'samples.')
 
         test(Args, TestData, SampleNet, TestDevice)

@@ -9,7 +9,9 @@ import matplotlib.pyplot as plt
 import sys, os, argparse
 
 FileDirPath = os.path.dirname(os.path.realpath(__file__))
-sys.path.append(os.path.join(FileDirPath, './models'))
+sys.path.append(os.path.join(FileDirPath, '../models'))
+sys.path.append(os.path.join(FileDirPath, '..'))
+
 import ClassificationNet
 
 def test(Args, TestData, Net, TestDevice):
@@ -19,13 +21,12 @@ def test(Args, TestData, Net, TestDevice):
 
     for i in range(nSamples):
         Image, GTLabel = TestData[i]
-        print(Image.size())
+        # print(Image.size())
         Image = Image.to(TestDevice)
-        PredLabel = TestNet(Image.unsqueeze_(0)).cpu().argmax().item()
-        plt.imshow(Image.cpu().numpy().squeeze(), cmap='gray')
-        plt.xlabel(('GT: {}; Pred: {}').format(GTLabel.cpu().item(), PredLabel))
+        PredLabel = TestNet(Image.unsqueeze_(0)).to('cpu').argmax().item()
+        plt.imshow(Image.to('cpu').numpy().squeeze(), cmap='gray')
+        plt.xlabel(('GT: {}; Pred: {}').format(GTLabel, PredLabel))
         plt.pause(1)
-
 
 Parser = argparse.ArgumentParser(description='Sample code that uses the ptTools framework for training a simple MNIST classification task.')
 InputGroup = Parser.add_mutually_exclusive_group()
@@ -53,9 +54,9 @@ if __name__ == '__main__':
         print(SampleNet)
 
         TrainDevice = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-        TrainData = MNIST(root=SampleNet.Args.input_dir, train=True, download=True, transform=MNISTClassTrans)
+        TrainData = MNIST(root=SampleNet.Config.Args.input_dir, train=True, download=True, transform=MNISTClassTrans)
         print('[ INFO ]: Data has', len(TrainData), 'samples.')
-        TrainDataLoader = torch.utils.data.DataLoader(TrainData, batch_size=SampleNet.Args.batch_size, shuffle=True, num_workers=4)
+        TrainDataLoader = torch.utils.data.DataLoader(TrainData, batch_size=SampleNet.Config.Args.batch_size, shuffle=True, num_workers=4)
 
         # Train
         SampleNet.train(TrainDataLoader, Objective=nn.NLLLoss(), TrainDevice=TrainDevice)
@@ -65,7 +66,7 @@ if __name__ == '__main__':
         print(SampleNet)
 
         TestDevice = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-        TestData = MNIST(root=SampleNet.Args.input_dir, train=False, download=True, transform=MNISTClassTrans)
+        TestData = MNIST(root=SampleNet.Config.Args.input_dir, train=False, download=True, transform=MNISTClassTrans)
         print('[ INFO ]: Data has', len(TestData), 'samples.')
 
         test(Args, TestData, SampleNet, TestDevice)
