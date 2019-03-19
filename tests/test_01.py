@@ -22,3 +22,10 @@ from tk3dv import pyEasel
 
 print('pyEasel version:', tk3dv.pyEasel.__version__)
 print('pyEasel version:', pyEasel.__version__)
+
+
+########## Test ptTools
+from tk3dv import ptTools
+
+print('ptTools version:', tk3dv.ptTools.__version__)
+print('ptTools version:', ptTools.__version__)
