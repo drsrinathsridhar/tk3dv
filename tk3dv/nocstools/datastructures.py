@@ -1,13 +1,11 @@
-import os
-import sys
-
+import numpy as np
 import OpenGL.GL as gl
 import OpenGL.arrays.vbo as glvbo
-import numpy as np
-
-FileDirPath = os.path.dirname(__file__)
-sys.path.append(os.path.join(FileDirPath, '..'))
-from tk3dv.common import drawing
+import cv2, sys, os
+import sys, os
+sys.path.append(os.path.dirname(__file__) + '../extern/')
+import pyEasel
+from common import drawing
 
 def backproject(DepthImage, Intrinsics, mask=None):
     OutPoints = np.zeros([0, 3])  # Each point is a row
@@ -71,6 +69,9 @@ class PointSet3D(PointSet):
             self.VBOPoints.delete()
             self.VBOColors.delete()
 
+    def __len__(self):
+        return self.Points.shape[0]
+
     def updateBoundingBox(self):
         self.BoundingBox[0] = np.min(self.Points, axis=0)
         self.BoundingBox[1] = np.max(self.Points, axis=0)
@@ -99,6 +100,17 @@ class PointSet3D(PointSet):
             self.Colors = Points / MaxVal
         else:
             self.Colors = Colors
+
+    def appendAll(self, Points, Colors=None):
+        NewPoints = Points.astype(np.float)
+        self.Points = np.vstack((self.Points, NewPoints))
+        MaxVal = np.max(NewPoints)
+        if np.all(Colors) == None:
+            if MaxVal <= 1.0:
+                MaxVal = 1.0
+            Colors = Points / MaxVal
+
+        self.Colors = np.vstack((self.Colors, Colors))
 
     def add(self, x, y, z, r = 0, g = 0, b = 0):
         self.Points = np.vstack([self.Points, np.array([x, y ,z])])
@@ -172,6 +184,11 @@ class DepthImage3D(PointSet3D):
 class CameraIntrinsics():
     def __init__(self, matrix=None):
         self.Matrix = matrix
+        self.Width = 0
+        self.Height = 0
+
+        self.PresetWidths = np.array([640, 320]) # Add more as needed
+        self.PresetHeights = np.array([480, 240]) # Add more as needed
 
     def init_with_file(self, FileName):
         with open(FileName) as f:
@@ -182,9 +199,20 @@ class CameraIntrinsics():
             if line[0] == '#':
                 continue
             Params = [x.strip() for x in line.split(',')]
+            if len(Params) == 4 or len(Params) == 6:
+                self.Width = self.PresetWidths[np.argmin(np.abs(self.PresetWidths - float(Params[2])*2))]
+                self.Height = self.PresetHeights[np.argmin(np.abs(self.PresetHeights - float(Params[3])*2))]
+
+                print('[ WARN ]: No image height and width passed. Finding the closest based on the principal point.')
+            elif len(Params) == 8:
+                self.Width = Params[6]
+                self.Height = Params[7]
+
+            print('[ INFO ]: Using width, height - {}, {}.'.format(self.Width, self.Height))
+
             self.Matrix[0, 0] = Params[0]
             self.Matrix[1, 1] = Params[1]
-            self.Matrix[0, 2] = Params[2]
-            self.Matrix[1, 2] = Params[3]
+            self.Matrix[0, 2] = Params[2] # cx
+            self.Matrix[1, 2] = Params[3] # cy
 
         print('[ INFO ]: Using intrinsics:\n', self.Matrix)

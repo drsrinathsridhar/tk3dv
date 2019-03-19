@@ -22,9 +22,8 @@ VERSION = '0.1'
 
 # What packages are required for this module to be executed?
 REQUIRED = [
-    'tk3dv'
-    #, 'numpy==1.15.4', 'PyOpenGL==3.1.0', 'PyQt5==5.11.3'
-
+    'tk3dv',
+    'numpy>=1.15.4', 'PyOpenGL>=3.1.0', 'PyQt5>=5.11.3', 'opencv-python<=3.2.0.8'
 ]
 
 # What packages are optional?
