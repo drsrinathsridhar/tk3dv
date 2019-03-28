@@ -1,5 +1,4 @@
 import sys, os
-sys.path.append(os.path.dirname(__file__) + './extern/')
 import tk3dv.pyEasel as pyEasel
 from tk3dv.common import drawing
 from PyQt5.QtWidgets import QApplication
@@ -35,7 +34,7 @@ class NOCVizModule(EaselModule):
 
         gl.glTranslate(-20, -20, -20)
         # Draw other NOCS here
-        self.drawNOCS(0.5, 40, 40, 40)
+        self.drawNOCS(0.8, 40, 40, 40)
 
         gl.glPopMatrix()
 
