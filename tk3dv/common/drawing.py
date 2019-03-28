@@ -85,7 +85,7 @@ def activateCamera(Intrinsics, ImageShape):
     # Adding this rotation makes it right
     gl.glRotatef(180.0, 0.0, 0.0, 1.0)
 
-def drawUnitCube(lineWidth=1.0, isRainbow=False, WireColor=(1, 1, 1)):
+def drawUnitWireCube(lineWidth=1.0, isRainbow=False, WireColor=(1, 1, 1)):
     # Draws a cube of size 1 centered at 0.5, 0.5, 0.5
     gl.glPushAttrib(gl.GL_LINE_WIDTH)
     gl.glLineWidth(lineWidth)
@@ -141,6 +141,64 @@ def drawUnitCube(lineWidth=1.0, isRainbow=False, WireColor=(1, 1, 1)):
         gl.glEnd()
 
     gl.glPopAttrib()
+
+def drawUnitCube(isRainbow=False, Color=(1, 1, 1), Alpha=1.0):
+    gl.glPushAttrib(gl.GL_COLOR_BUFFER_BIT)
+    gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA)
+    gl.glEnable(gl.GL_BLEND)
+
+    # Drawing CCW
+    gl.glBegin(gl.GL_QUADS)
+
+    if isRainbow == False:
+        gl.glColor4f(Color[0], Color[1], Color[2], Alpha)
+
+    for i in range(0, 2):
+        # Bottom and Top
+        if isRainbow:
+            gl.glColor4f(0.0, 0.0, i, Alpha)
+        gl.glVertex3f(0.0, 0.0, i)
+        if isRainbow:
+            gl.glColor4f(1.0, 0.0, i, Alpha)
+        gl.glVertex3f(1.0, 0.0, i)
+        if isRainbow:
+            gl.glColor4f(1.0, 1.0, i, Alpha)
+        gl.glVertex3f(1.0, 1.0, i)
+        if isRainbow:
+            gl.glColor4f(0.0, 1.0, i, Alpha)
+        gl.glVertex3f(0.0, 1.0, i)
+
+        # Right and Left
+        if isRainbow:
+            gl.glColor4f(i, 0.0, 0.0, Alpha)
+        gl.glVertex3f(i, 0.0, 0.0)
+        if isRainbow:
+            gl.glColor4f(i, 1.0, 0.0, Alpha)
+        gl.glVertex3f(i, 1.0, 0.0)
+        if isRainbow:
+            gl.glColor4f(i, 1.0, 1.0, Alpha)
+        gl.glVertex3f(i, 1.0, 1.0)
+        if isRainbow:
+            gl.glColor4f(i, 0.0, 1.0, Alpha)
+        gl.glVertex3f(i, 0.0, 1.0)
+
+        # Front and Back
+        if isRainbow:
+            gl.glColor4f(0.0, i, 0.0, Alpha)
+        gl.glVertex3f(0.0, i, 0.0)
+        if isRainbow:
+            gl.glColor4f(1.0, i, 0.0, Alpha)
+        gl.glVertex3f(1.0, i, 0.0)
+        if isRainbow:
+            gl.glColor4f(1.0, i, 1.0, Alpha)
+        gl.glVertex3f(1.0, i, 1.0)
+        if isRainbow:
+            gl.glColor4f(0.0, i, 1.0, Alpha)
+        gl.glVertex3f(0.0, i, 1.0)
+
+    gl.glEnd()
+    gl.glPopAttrib()
+
 
 def drawCheckerBoard(floorSize, squareWidthInPixel, squareHeightInPixel, SceneHeight):
     mat_specular = np.array([1.0, 1.0, 1.0, 1.0])

@@ -10,7 +10,7 @@ sys.path.append(os.path.join(FileDirPath, '..'))
 from tk3dv.common import drawing
 
 def backproject(DepthImage, Intrinsics, mask=None):
-    OutPoints = np.zeros([0, 3])  # Each point is a row
+    # OutPoints = np.zeros([0, 3])  # Each point is a row
 
     # Depth image should be (DepthImage.shape) == 2 and DepthImage.dtype == 'uint16':
 

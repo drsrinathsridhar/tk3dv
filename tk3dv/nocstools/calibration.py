@@ -5,16 +5,8 @@ Created on 01.11.2012
 mean reprojection error: 0.551599651484px
 root mean squared reprojection error: 0.615873177017px
 '''
-import numpy
-import math
+import numpy, math, scipy
 from scipy import optimize
-import scipy
-
-import math
-import numpy
-
-# from Quaternion import Quat
-# import Quaternion
 
 # computes the 2d distance between vector a and b
 def distance(a, b):
@@ -22,20 +14,6 @@ def distance(a, b):
 
 
 _EPS = numpy.finfo(float).eps * 4.0
-
-
-# def quaternion_to_matrix(quatArr):
-#     quatArr = Quaternion.normalize(quatArr)
-#     q = Quat(attitude=quatArr)
-#     return q.transform
-#
-#
-# def quaternion_from_matrix(matrix):
-#     q = Quat(attitude=matrix)
-#     print(q.q)
-#     Quaternion.normalize(q.q)
-#     print(q.q)
-#     return q
 
 
 # Gold Standard Algorithm for estimating P (Multiple View Geometry Sec. Edition, page:181, (7.1))
@@ -157,6 +135,21 @@ def nonLinearOptimization(p, correspondences):
     # print(p)
     return p
 
+# from Quaternion import Quat
+# import Quaternion
+
+# def quaternion_to_matrix(quatArr):
+#     quatArr = Quaternion.normalize(quatArr)
+#     q = Quat(attitude=quatArr)
+#     return q.transform
+#
+#
+# def quaternion_from_matrix(matrix):
+#     q = Quat(attitude=matrix)
+#     print(q.q)
+#     Quaternion.normalize(q.q)
+#     print(q.q)
+#     return q
 #
 # def constructPFromParameters(parameterArr):
 #     c = numpy.asarray(parameterArr[0:3])
