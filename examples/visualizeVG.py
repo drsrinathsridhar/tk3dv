@@ -44,6 +44,7 @@ class VGVizModule(EaselModule):
         gl.glScale(1 / GridSize, 1 / GridSize, 1 / GridSize)
 
         # TODO: Create a VoxelGrid class in nocstools and add VBO based drawing to it
+        # Add VBO-based drawing for cubes, gorund plane, etc.
 
         for i in range(0, len(self.VGNZ[0])):
             gl.glPushMatrix()
