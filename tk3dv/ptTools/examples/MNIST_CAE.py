@@ -61,7 +61,7 @@ if __name__ == '__main__':
         TrainDataLoader = torch.utils.data.DataLoader(TrainData, batch_size=SampleNet.Config.Args.batch_size, shuffle=True, num_workers=4)
 
         # Train
-        SampleNet.train(TrainDataLoader, Objective=nn.MSELoss(), TrainDevice=TrainDevice)
+        SampleNet.fit(TrainDataLoader, Objective=nn.MSELoss(), TrainDevice=TrainDevice)
     elif Args.mode == 'test':
         SampleNet = CAE.SimpleCAE()
         SampleNet.loadCheckpoint()

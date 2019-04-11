@@ -59,7 +59,7 @@ if __name__ == '__main__':
         TrainDataLoader = torch.utils.data.DataLoader(TrainData, batch_size=SampleNet.Config.Args.batch_size, shuffle=True, num_workers=4)
 
         # Train
-        SampleNet.train(TrainDataLoader, Objective=nn.NLLLoss(), TrainDevice=TrainDevice)
+        SampleNet.fit(TrainDataLoader, Objective=nn.NLLLoss(), TrainDevice=TrainDevice)
     elif Args.mode == 'test':
         SampleNet = ClassificationNet.SimpleClassNet()
         SampleNet.loadCheckpoint()
