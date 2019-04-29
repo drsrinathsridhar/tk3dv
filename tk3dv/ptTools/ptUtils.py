@@ -207,3 +207,19 @@ def configSerialize(Args, FilePath, isAppend=True):
 def makeDir(Path):
     if os.path.exists(Path) == False:
         os.makedirs(Path)
+
+def setupGPUs(RequestedGPUList):
+    if torch.cuda.is_available():
+        DeviceList = RequestedGPUList
+        MainGPUID = DeviceList[0]
+        nDevs = torch.cuda.device_count()
+        AvailableDevList = [i for i in range(0, nDevs)]  # All GPUs
+        if len(DeviceList) == 1 and MainGPUID < 0:
+            DeviceList = AvailableDevList
+        if set(DeviceList).issubset(set(AvailableDevList)) == False:
+            raise RuntimeError('Unable to find requested devices {}.'.format(DeviceList))
+    else:
+        DeviceList = [0]
+        MainGPUID = 0
+
+    return DeviceList, MainGPUID
