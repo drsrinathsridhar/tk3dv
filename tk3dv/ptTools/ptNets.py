@@ -144,8 +144,8 @@ class ptNet(nn.Module):
             EpochLosses = [] # For all batches in an epoch
             Tic = ptUtils.getCurrentEpochTime()
             for i, (Data, Targets) in enumerate(TrainDataLoader, 0):  # Get each batch
-                DataTD = Data.to(TrainDevice)
-                TargetsTD = Targets.to(TrainDevice)
+                DataTD = ptUtils.sendToDevice(Data, TrainDevice)
+                TargetsTD = ptUtils.sendToDevice(Targets, TrainDevice)
 
                 self.Optimizer.zero_grad()
 
