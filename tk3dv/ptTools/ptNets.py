@@ -107,8 +107,8 @@ class ptNet(nn.Module):
         Tic = ptUtils.getCurrentEpochTime()
         # print('Val length:', len(ValDataLoader))
         for i, (Data, Targets) in enumerate(ValDataLoader, 0):  # Get each batch
-            DataTD = Data.to(Device)
-            TargetsTD = Targets.to(Device)
+            DataTD = ptUtils.sendToDevice(Data, TrainDevice)
+            TargetsTD = ptUtils.sendToDevice(Targets, TrainDevice)
 
             Output = self.forward(DataTD)
             Loss = Objective(Output, TargetsTD)
