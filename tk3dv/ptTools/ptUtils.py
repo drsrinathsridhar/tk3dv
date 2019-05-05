@@ -195,7 +195,8 @@ def configSerialize(Args, FilePath, isAppend=True):
         ArgsDict = vars(Args)
         for Arg in ArgsDict:
             if type(ArgsDict[Arg]) is bool:
-                File.write('--{}\n'.format(Arg.replace('_', '-')))
+                if ArgsDict[Arg] == True: # Serialize only if true
+                    File.write('--{}\n'.format(Arg.replace('_', '-')))
             elif type(ArgsDict[Arg]) is float:
                 File.write('--{}={}\n'.format(Arg.replace('_', '-'), '{0:.6f}'.format(ArgsDict[Arg])))
             elif type(ArgsDict[Arg]) is list:
