@@ -24,7 +24,6 @@ class ptNetExptConfig():
         # Machine-specific params
         self.Parser.add_argument('--expt-name', help='Provide a name for this experiment.', required=True)
         self.Parser.add_argument('--input-dir', help='Provide the input directory where datasets are stored.', required=True)
-        self.Parser.add_argument('--mode', help='Operation mode.', choices=['train', 'val', 'test'])
         # -----
         OutDirGroup = self.Parser.add_mutually_exclusive_group(required=True)
         OutDirGroup.add_argument('--output-dir',
