@@ -25,7 +25,7 @@ class ptNetExptConfig():
         self.Parser.add_argument('--expt-name', help='Provide a name for this experiment.', required=True)
         self.Parser.add_argument('--input-dir', help='Provide the input directory where datasets are stored.', required=True)
         # -----
-        OutDirGroup = self.Parser.add_mutually_exclusive_group(required=True)
+        OutDirGroup = self.Parser.add_group(required=True)
         OutDirGroup.add_argument('--output-dir',
                             help='Provide the *absolute* output directory where checkpoints, logs, and other output will be stored (under expt_name).')
         OutDirGroup.add_argument('--rel-output-dir',
@@ -39,6 +39,8 @@ class ptNetExptConfig():
         self.Args, _ = self.Parser.parse_known_args(InputArgs)
 
         if self.Args.rel_output_dir is not None: # Relative path takes precedence
+            if self.Args.output_dir is not None:
+                print('[ INFO ]: Relative path taking precedence to absolute path.')
             DirPath = os.getcwd() # os.path.dirname(os.path.realpath(__file__))
             for Arg in InputArgs:
                 if '@' in Arg: # Config file is passed, path should be relative to config file
