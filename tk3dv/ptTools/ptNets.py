@@ -47,7 +47,10 @@ class ptNetExptConfig():
         if isPrint:
             ArgsDict = vars(self.Args)
             for Arg in ArgsDict:
-                print('{:<15}:   {:<50}'.format(Arg, ArgsDict[Arg]))
+                if ArgsDict[Arg] is not None:
+                    print('{:<15}:   {:<50}'.format(Arg, ArgsDict[Arg]))
+                else:
+                    print('{:<15}:   {:<50}'.format(Arg, 'NOT DEFINED'))
 
     def getHelp(self):
         self.Parser.print_help()
