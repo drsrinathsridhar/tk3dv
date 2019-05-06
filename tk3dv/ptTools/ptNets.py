@@ -39,6 +39,11 @@ class ptNetExptConfig():
 
         self.Args, _ = self.Parser.parse_known_args(InputArgs)
 
+        if self.Args.rel_output_dir is not None:
+            FileDirPath = os.path.dirname(os.path.realpath(__file__))
+            self.Args.output_dir = os.path.join(FileDirPath, self.Args.rel_output_dir)
+            print('[ INFO ]: Converted relative path {} to absolute path {}'.format(self.Args.rel_output_dir, self.Args.output_dir))
+
         if isPrint:
             ArgsDict = vars(self.Args)
             for Arg in ArgsDict:
