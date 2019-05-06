@@ -43,7 +43,7 @@ class ptNetExptConfig():
             DirPath = os.getcwd() # os.path.dirname(os.path.realpath(__file__))
             for Arg in InputArgs:
                 if '@' in Arg: # Config file is passed, path should be relative to config file
-                    DirPath = os.path.dirname(ptUtils.expandTilde(Arg[1:]))
+                    DirPath = os.path.abspath(os.path.dirname(ptUtils.expandTilde(Arg[1:]))) # Abs directory path of config file
                     break
             self.Args.output_dir = os.path.join(DirPath, self.Args.rel_output_dir)
             print('[ INFO ]: Converted relative path {} to absolute path {}'.format(self.Args.rel_output_dir, self.Args.output_dir))
