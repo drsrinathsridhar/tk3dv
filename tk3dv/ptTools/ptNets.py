@@ -24,9 +24,14 @@ class ptNetExptConfig():
         # Machine-specific params
         self.Parser.add_argument('--expt-name', help='Provide a name for this experiment.', required=True)
         self.Parser.add_argument('--input-dir', help='Provide the input directory where datasets are stored.', required=True)
-        self.Parser.add_argument('--output-dir',
-                            help='Provide the output directory where checkpoints, logs, and other output will be stored.',
-                            required=True)
+        OutDirGroup = self.Parser.add_mutually_exclusive_group(required=True)
+        # -----
+        OutDirGroup.add_argument('--mode', help='Operation mode.', choices=['train', 'val', 'test'])
+        OutDirGroup.add_argument('--output-dir',
+                            help='Provide the *absolute* output directory where checkpoints, logs, and other output will be stored (under expt_name).')
+        OutDirGroup.add_argument('--rel-output-dir',
+                            help='Provide the *relative (pwd or config file)* output directory where checkpoints, logs, and other output will be stored (under expt_name).')
+        # -----
         self.Parser.add_argument('--epochs', help='Choose number of epochs.', choices=range(1, 10000), metavar='1..10000',
                             required=False, default=10, type=int)
         self.Parser.add_argument('--save-freq', help='Choose epoch frequency to save checkpoints. Zero (0) will only at the end of training [not recommended].', choices=range(0, 10000), metavar='0..10000',
