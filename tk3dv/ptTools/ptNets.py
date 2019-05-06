@@ -22,14 +22,13 @@ class ptNetExptConfig():
                             required=False, default=128, type=int)
 
         # Machine-specific params
-        self.Parser.add_argument('--expt-name', help='Provide a name for this experiment.', required=True)
-        self.Parser.add_argument('--input-dir', help='Provide the input directory where datasets are stored.', required=True)
+        self.Parser.add_argument('--expt-name', help='Provide a name for this experiment.')
+        self.Parser.add_argument('--input-dir', help='Provide the input directory where datasets are stored.')
         # -----
-        OutDirGroup = self.Parser.add_group(required=True)
-        OutDirGroup.add_argument('--output-dir',
+        self.Parser.add_argument('--output-dir',
                             help='Provide the *absolute* output directory where checkpoints, logs, and other output will be stored (under expt_name).')
-        OutDirGroup.add_argument('--rel-output-dir',
-                            help='Provide the *relative (pwd or config file)* output directory where checkpoints, logs, and other output will be stored (under expt_name).')
+        self.Parser.add_argument('--rel-output-dir',
+                            help='Provide the *relative* (pwd or config file) output directory where checkpoints, logs, and other output will be stored (under expt_name).')
         # -----
         self.Parser.add_argument('--epochs', help='Choose number of epochs.', choices=range(1, 10000), metavar='1..10000',
                             required=False, default=10, type=int)
@@ -37,6 +36,9 @@ class ptNetExptConfig():
                             required=False, default=5, type=int)
 
         self.Args, _ = self.Parser.parse_known_args(InputArgs)
+
+        if self.Args.rel_output_dir is None and self.Args.output_dir is None:
+            raise RuntimeError('[ ERR ]: One or both of --output-dir or --rel-output-dir is required.')
 
         if self.Args.rel_output_dir is not None: # Relative path takes precedence
             if self.Args.output_dir is not None:
