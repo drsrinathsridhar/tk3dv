@@ -38,7 +38,7 @@ class ptNetExptConfig():
 
         self.Args, _ = self.Parser.parse_known_args(InputArgs)
 
-        if self.Args.rel_output_dir is not None:
+        if self.Args.rel_output_dir is not None: # Relative path takes precedence
             DirPath = os.getcwd() # os.path.dirname(os.path.realpath(__file__))
             for Arg in InputArgs:
                 if '@' in Arg: # Config file is passed, path should be relative to config file
