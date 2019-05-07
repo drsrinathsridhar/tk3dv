@@ -154,6 +154,29 @@ class OBJPointSet3D(PointSet3D):
         if os.path.exists(OBJPath) == False:
             print('[ WARN ]: File does not exist:', OBJPath)
 
+class NOCSMap3D(PointSet3D):
+    def __init__(self, NOCSMap, RGB=None, Color=None):
+        super().__init__()
+        self.createNOCSFromNM(NOCSMap, RGB, Color)
+
+    def createNOCSFromNM(self, NOCSMap, RGB=None, Color=None):
+        ValidIdx = np.where(np.all(NOCSMap != [255, 255, 255], axis=-1))
+        ValidPoints = NOCSMap[ValidIdx[0], ValidIdx[1]] / 255
+
+        # The PC can be colored with: (1) NOCS color, (2) RGB color, (3) Uniform color
+        NOCSColors = ValidPoints
+        RGBColors = None
+        if RGB is not None:
+            RGBColors = RGB[ValidIdx[0], ValidIdx[1]] / 255
+        UniColors = None
+        if Color is not None:
+            ColorNP = np.asarray(Color) / 255
+            UniColors = np.transpose(np.repeat(ColorNP[:, np.newaxis], NOCSMap[ValidIdx].shape[0], axis=1))
+
+        self.addAll(ValidPoints, Colors=RGBColors)
+
+    def __del__(self):
+        super().__del__()
 
 class DepthImage3D(PointSet3D):
     def __init__(self, DepthImage, Intrinsics, mask=None):
