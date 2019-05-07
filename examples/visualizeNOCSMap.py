@@ -179,7 +179,7 @@ class NOCSMapModule(EaselModule):
                 if Idx != self.activeNMIdx:
                     continue
             NOCS.draw(self.PointSize)
-            # NOCS.drawBB()
+            NOCS.drawBB()
 
         for Idx, (K, R, C, isF) in enumerate(zip(self.CamIntrinsics, self.CamRots, self.CamPos, self.CamFlip), 0):
             if self.activeNMIdx != self.nNM:
