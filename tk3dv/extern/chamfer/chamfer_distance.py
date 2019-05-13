@@ -4,9 +4,9 @@ import os
 FileDirPath = os.path.dirname(os.path.realpath(__file__))
 print('[ INFO ]: Chamfer directory:', FileDirPath)
 
-cd = load(name='cd', sources=[os.path.join(FileDirPath, 'chamfer_distance.cpp')])
-if torch.cuda.is_available():
-    cd = load(name='cd', sources=[os.path.join(FileDirPath, 'chamfer_distance.cpp'), os.path.join(FileDirPath, 'chamfer_distance.cu')])
+# cd = load(name='cd', sources=[os.path.join(FileDirPath, 'chamfer_distance.cpp')])
+# if torch.cuda.is_available():
+cd = load(name='cd', sources=[os.path.join(FileDirPath, 'chamfer_distance.cpp'), os.path.join(FileDirPath, 'chamfer_distance.cu')])
 
 class ChamferDistanceFunction(torch.autograd.Function):
     @staticmethod
