@@ -2,6 +2,7 @@ import torch
 from torch.utils.cpp_extension import load
 import os
 FileDirPath = os.path.dirname(os.path.realpath(__file__))
+print('[ INFO ]: Chamfer directory:', FileDirPath)
 
 cd = load(name='cd', sources=[os.path.join(FileDirPath, 'chamfer_distance.cpp')])
 if torch.cuda.is_available():
