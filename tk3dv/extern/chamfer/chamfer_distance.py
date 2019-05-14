@@ -36,22 +36,23 @@ class ChamferDistanceFunction(torch.autograd.Function):
 
     @staticmethod
     def backward(ctx, graddist1, graddist2):
-        xyz1, xyz2, idx1, idx2 = ctx.saved_tensors
+        with torch.autograd.set_detect_anomaly(True):
+            xyz1, xyz2, idx1, idx2 = ctx.saved_tensors
 
-        graddist1 = graddist1.contiguous()
-        graddist2 = graddist2.contiguous()
+            graddist1 = graddist1.contiguous()
+            graddist2 = graddist2.contiguous()
 
-        gradxyz1 = torch.zeros(xyz1.size())
-        gradxyz2 = torch.zeros(xyz2.size())
+            gradxyz1 = torch.zeros(xyz1.size())
+            gradxyz2 = torch.zeros(xyz2.size())
 
-        if not graddist1.is_cuda:
-            cd.backward(xyz1, xyz2, gradxyz1, gradxyz2, graddist1, graddist2, idx1, idx2)
-        else:
-            gradxyz1 = gradxyz1.cuda()
-            gradxyz2 = gradxyz2.cuda()
-            cd.backward_cuda(xyz1, xyz2, gradxyz1, gradxyz2, graddist1, graddist2, idx1, idx2)
+            if not graddist1.is_cuda:
+                cd.backward(xyz1, xyz2, gradxyz1, gradxyz2, graddist1, graddist2, idx1, idx2)
+            else:
+                gradxyz1 = gradxyz1.cuda()
+                gradxyz2 = gradxyz2.cuda()
+                cd.backward_cuda(xyz1, xyz2, gradxyz1, gradxyz2, graddist1, graddist2, idx1, idx2)
 
-        return gradxyz1, gradxyz2
+            return gradxyz1, gradxyz2
 
 
 class ChamferDistance(torch.nn.Module):
