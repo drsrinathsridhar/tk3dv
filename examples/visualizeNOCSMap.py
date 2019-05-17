@@ -90,10 +90,10 @@ class NOCSMapModule(EaselModule):
 
         p, c, k, r, Flip = calibration.calculateCameraParameters(Corr)
 
-        # print('Full estimate:\n')
-        # print('R:\n', r, '\n')
-        # print('C:\n', c, '\n')
-        # print('K:\n', k, '\n\n')
+        print('Full estimate:\n')
+        print('R:\n', r, '\n')
+        print('C:\n', c, '\n')
+        print('K:\n', k, '\n\n')
 
         useEstimatedK = True
         if useEstimatedK == False and Intrinsics is not None:
@@ -103,13 +103,10 @@ class NOCSMapModule(EaselModule):
             c = -r.T @ rc[:, -1]
             k = Intrinsics.Matrix
 
-        # print('K-based estimate:\n')
-        # print('R:\n', r, '\n')
-        # print('C:\n', c, '\n')
-        # print('K:\n', k, '\n\n')
-        # print(c, '\n\n')
-        # print('K:\n', k, '\n\n')
-        # print(r, '\n\n')
+        print('K-based estimate:\n')
+        print('R:\n', r, '\n')
+        print('C:\n', c, '\n')
+        print('K:\n', k, '\n\n')
 
         return p, k, r, c, Flip
 
@@ -155,11 +152,11 @@ class NOCSMapModule(EaselModule):
             self.NOCSMaps.append(NOCSMap)
             self.NOCS.append(NOCS)
 
-            # _, K, R, C, Flip = self.estimateCameraPoseFromNM(NOCSMap, NOCS, N=1000, Intrinsics=self.Intrinsics) # The rotation and translation are about the NOCS origin
-            # self.CamIntrinsics.append(K)
-            # self.CamRots.append(R)
-            # self.CamPos.append(C)
-            # self.CamFlip.append(Flip)
+            _, K, R, C, Flip = self.estimateCameraPoseFromNM(NOCSMap, NOCS, N=1000, Intrinsics=self.Intrinsics) # The rotation and translation are about the NOCS origin
+            self.CamIntrinsics.append(K)
+            self.CamRots.append(R)
+            self.CamPos.append(C)
+            self.CamFlip.append(Flip)
 
         self.nNM = len(NMFiles)
         self.activeNMIdx = self.nNM # len(NMFiles) will show all
