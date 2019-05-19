@@ -26,6 +26,9 @@ class NOCSMapModule(EaselModule):
         ArgGroup.add_argument('--nocs-maps', nargs='+', help='Specify input NOCS maps. * globbing is supported.', required=True)
         ArgGroup.add_argument('--colors', nargs='+', help='Specify RGB images corresponding to the input NOCS maps. * globbing is supported.', required=False)
         ArgGroup.add_argument('--intrinsics', help='Specify the intrinsics file to estimate camera pose.', required=False, default=None)
+        ArgGroup.add_argument('--no-pose', help='Choose to not estimate pose.',
+                              action='store_true')
+        self.Parser.set_defaults(no_pose=False)
 
         self.Args, _ = self.Parser.parse_known_args(InputArgs)
         if len(sys.argv) <= 1:
@@ -152,11 +155,12 @@ class NOCSMapModule(EaselModule):
             self.NOCSMaps.append(NOCSMap)
             self.NOCS.append(NOCS)
 
-            _, K, R, C, Flip = self.estimateCameraPoseFromNM(NOCSMap, NOCS, N=1000, Intrinsics=self.Intrinsics) # The rotation and translation are about the NOCS origin
-            self.CamIntrinsics.append(K)
-            self.CamRots.append(R)
-            self.CamPos.append(C)
-            self.CamFlip.append(Flip)
+            if self.Args.no_pose == False:
+                _, K, R, C, Flip = self.estimateCameraPoseFromNM(NOCSMap, NOCS, N=1000, Intrinsics=self.Intrinsics) # The rotation and translation are about the NOCS origin
+                self.CamIntrinsics.append(K)
+                self.CamRots.append(R)
+                self.CamPos.append(C)
+                self.CamFlip.append(Flip)
 
         self.nNM = len(NMFiles)
         self.activeNMIdx = self.nNM # len(NMFiles) will show all
