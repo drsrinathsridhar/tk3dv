@@ -54,6 +54,8 @@ class NOCSMapModule(EaselModule):
         self.nNM = 0
         self.SSCtr = 0
         self.takeSS = False
+        self.showNOCS = True
+        self.showBB = True
         self.loadData()
 
     def drawNOCS(self, lineWidth=2.0, ScaleX=1, ScaleY=1, ScaleZ=1, OffsetX=0, OffsetY=0, OffsetZ=0):
@@ -180,7 +182,8 @@ class NOCSMapModule(EaselModule):
                 if Idx != self.activeNMIdx:
                     continue
             NOCS.draw(self.PointSize)
-            NOCS.drawBB()
+            if self.showBB:
+                NOCS.drawBB()
 
         for Idx, (K, R, C, isF) in enumerate(zip(self.CamIntrinsics, self.CamRots, self.CamPos, self.CamFlip), 0):
             if self.activeNMIdx != self.nNM:
@@ -200,7 +203,8 @@ class NOCSMapModule(EaselModule):
             drawing.drawAxes(0.2)
             gl.glPopMatrix()
 
-        self.drawNOCS(lineWidth=5.0)
+        if self.showNOCS:
+            self.drawNOCS(lineWidth=5.0)
 
         gl.glPopMatrix()
 
@@ -230,6 +234,11 @@ class NOCSMapModule(EaselModule):
         if a0.key() == QtCore.Qt.Key_T:  # Toggle NOCS views
             if self.nNM > 0:
                 self.activeNMIdx = (self.activeNMIdx + 1)%(self.nNM+1)
+
+        if a0.key() == QtCore.Qt.Key_N:
+            self.showNOCS = not self.showNOCS
+        if a0.key() == QtCore.Qt.Key_B:
+            self.showBB = not self.showBB
 
         if a0.key() == QtCore.Qt.Key_S:
             print('[ INFO ]: Taking snapshot.')
