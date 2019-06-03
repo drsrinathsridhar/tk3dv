@@ -142,61 +142,61 @@ def drawUnitWireCube(lineWidth=1.0, isRainbow=False, WireColor=(1, 1, 1)):
 
     gl.glPopAttrib()
 
-def drawUnitCube(lineWidth=1.0, isRainbow=False, WireColor=(1, 1, 1)):
-    # Draws a cube of size 1 centered at 0.5, 0.5, 0.5
-    gl.glPushAttrib(gl.GL_LINE_WIDTH)
-    gl.glLineWidth(lineWidth)
+def drawUnitCube(isRainbow=False, Color=(1, 1, 1), Alpha=1.0):
+    gl.glPushAttrib(gl.GL_COLOR_BUFFER_BIT)
+    gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA)
+    gl.glEnable(gl.GL_BLEND)
 
-    gl.glColor3f(WireColor[0], WireColor[1], WireColor[2])
+    # Drawing CCW
+    gl.glBegin(gl.GL_QUADS)
+
+    if isRainbow == False:
+        gl.glColor4f(Color[0], Color[1], Color[2], Alpha)
+
     for i in range(0, 2):
-        gl.glBegin(gl.GL_LINE_LOOP)
         # Bottom and Top
         if isRainbow:
-            gl.glColor3f(0.0, 0.0, i)
+            gl.glColor4f(0.0, 0.0, i, Alpha)
         gl.glVertex3f(0.0, 0.0, i)
         if isRainbow:
-            gl.glColor3f(1.0, 0.0, i)
+            gl.glColor4f(1.0, 0.0, i, Alpha)
         gl.glVertex3f(1.0, 0.0, i)
         if isRainbow:
-            gl.glColor3f(1.0, 1.0, i)
+            gl.glColor4f(1.0, 1.0, i, Alpha)
         gl.glVertex3f(1.0, 1.0, i)
         if isRainbow:
-            gl.glColor3f(0.0, 1.0, i)
+            gl.glColor4f(0.0, 1.0, i, Alpha)
         gl.glVertex3f(0.0, 1.0, i)
-        gl.glEnd()
 
-        gl.glBegin(gl.GL_LINE_LOOP)
         # Right and Left
         if isRainbow:
-            gl.glColor3f(i, 0.0, 0.0)
+            gl.glColor4f(i, 0.0, 0.0, Alpha)
         gl.glVertex3f(i, 0.0, 0.0)
         if isRainbow:
-            gl.glColor3f(i, 1.0, 0.0)
+            gl.glColor4f(i, 1.0, 0.0, Alpha)
         gl.glVertex3f(i, 1.0, 0.0)
         if isRainbow:
-            gl.glColor3f(i, 1.0, 1.0)
+            gl.glColor4f(i, 1.0, 1.0, Alpha)
         gl.glVertex3f(i, 1.0, 1.0)
         if isRainbow:
-            gl.glColor3f(i, 0.0, 1.0)
+            gl.glColor4f(i, 0.0, 1.0, Alpha)
         gl.glVertex3f(i, 0.0, 1.0)
-        gl.glEnd()
 
-        gl.glBegin(gl.GL_LINE_LOOP)
         # Front and Back
         if isRainbow:
-            gl.glColor3f(0.0, i, 0.0)
+            gl.glColor4f(0.0, i, 0.0, Alpha)
         gl.glVertex3f(0.0, i, 0.0)
         if isRainbow:
-            gl.glColor3f(1.0, i, 0.0)
+            gl.glColor4f(1.0, i, 0.0, Alpha)
         gl.glVertex3f(1.0, i, 0.0)
         if isRainbow:
-            gl.glColor3f(1.0, i, 1.0)
+            gl.glColor4f(1.0, i, 1.0, Alpha)
         gl.glVertex3f(1.0, i, 1.0)
         if isRainbow:
-            gl.glColor3f(0.0, i, 1.0)
+            gl.glColor4f(0.0, i, 1.0, Alpha)
         gl.glVertex3f(0.0, i, 1.0)
-        gl.glEnd()
 
+    gl.glEnd()
     gl.glPopAttrib()
 
 
