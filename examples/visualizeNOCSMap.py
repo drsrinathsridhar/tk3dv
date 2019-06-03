@@ -63,7 +63,7 @@ class NOCSMapModule(EaselModule):
 
         gl.glScale(ScaleX, ScaleY, ScaleZ)
         gl.glTranslate(OffsetX, OffsetY, OffsetZ)  # Center on cube center
-        drawing.drawUnitCube(lineWidth, True)
+        drawing.drawUnitWireCube(lineWidth, True)
 
         gl.glPopMatrix()
 
@@ -79,6 +79,7 @@ class NOCSMapModule(EaselModule):
 
         X = NOCS.Points.T
 
+        # Subsample
         # Enough to do pose estimation from a subset of points but randomly distributed in the image
         MaxN = x.shape[1]
         if N is not None:
@@ -89,31 +90,40 @@ class NOCSMapModule(EaselModule):
         x = x[:, RandIdx]
         X = X[:, RandIdx]
 
-        Corr = []
-        for i in range(0, max(X.shape)):
-            Corr.append((x[:, i], X[:, i]))
+        X = X.astype(np.float32)
+        x = x.astype(np.float32)
 
-        p, c, k, r, Flip = calibration.calculateCameraParameters(Corr)
+        if Intrinsics is not None:
+            Success, rvec, tvec, _ = cv2.solvePnPRansac(X.T, x.T, Intrinsics.Matrix, Intrinsics.DistCoeffs)
 
-        print('Full estimate:\n')
-        print('R:\n', r, '\n')
-        print('C:\n', c, '\n')
-        print('K:\n', k, '\n\n')
+            # print(Success)
+            # print(rvec)
+            # print(tvec)
 
-        useEstimatedK = True
-        if useEstimatedK == False and Intrinsics is not None:
-            # Use passed K to refine r, c
-            rc = np.linalg.inv(Intrinsics.Matrix) @ p
-            r = rc[:, :-1]
-            c = -r.T @ rc[:, -1]
             k = Intrinsics.Matrix
+            r, _ = cv2.Rodrigues(rvec) # Also outputs Jacobian
+            c = -r.T @ tvec
 
-        print('K-based estimate:\n')
-        print('R:\n', r, '\n')
-        print('C:\n', c, '\n')
-        print('K:\n', k, '\n\n')
+            print('K-based estimate:\n')
+            print('R:\n', r, '\n')
+            print('C:\n', c, '\n')
+            print('K:\n', k, '\n\n')
 
-        return p, k, r, c, Flip
+            return None, k, r, c, False
+
+        else:
+            Corr = []
+            for i in range(0, max(X.shape)):
+                Corr.append((x[:, i], X[:, i]))
+
+            p, c, k, r, Flip = calibration.calculateCameraParameters(Corr)
+
+            print('Full estimate:\n')
+            print('R:\n', r, '\n')
+            print('C:\n', c, '\n')
+            print('K:\n', k, '\n\n')
+
+            return p, k, r, c, Flip
 
     @staticmethod
     def getFileNames(InputList):

@@ -125,7 +125,7 @@ class PointSet3D(PointSet):
         gl.glTranslate(self.BBCenter[0], self.BBCenter[1], self.BBCenter[2])
         gl.glScale(self.BBSize[0], self.BBSize[1], self.BBSize[2])
         gl.glTranslate(-0.5, -0.5, -0.5) # Move box origin to center
-        drawing.drawUnitCube(LineWidth, False)
+        drawing.drawUnitWireCube(LineWidth, False)
 
         gl.glPopMatrix()
 
@@ -214,6 +214,8 @@ class CameraIntrinsics():
 
         self.PresetWidths = np.array([640, 320]) # Add more as needed
         self.PresetHeights = np.array([480, 240]) # Add more as needed
+
+        self.DistCoeffs = np.array([0, 0, 0, 0, 0, 0, 0, 0], dtype=np.float32) # Assuming 8 coeffs, all 0
 
     def init_with_file(self, FileName):
         with open(FileName) as f:
