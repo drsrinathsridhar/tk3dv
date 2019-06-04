@@ -30,6 +30,8 @@ class NOCSMapModule(EaselModule):
         ArgGroup.add_argument('--poses', nargs='+',
                               help='Specify the camera extrinsics corresponding to the input NOCS maps. * globbing is supported.',
                               required=False)
+        ArgGroup.add_argument('--num-points', help='Specify the number of pixels to use for camera pose registration.', default=1000, type=int, required=False)
+
 
         ArgGroup.add_argument('--no-pose', help='Choose to not estimate pose.', action='store_true')
         self.Parser.set_defaults(no_pose=False)
@@ -93,6 +95,7 @@ class NOCSMapModule(EaselModule):
             MaxN = min(N, x.shape[1])
         RandIdx = [i for i in range(0, x.shape[1])]
         random.shuffle(RandIdx)
+        print('[ INFO ]: Using {} points for estimating camera pose'.format(MaxN))
         RandIdx = RandIdx[:MaxN]
         x = x[:, RandIdx]
         X = X[:, RandIdx]
@@ -183,7 +186,7 @@ class NOCSMapModule(EaselModule):
             self.NOCS.append(NOCS)
 
             if self.Args.no_pose == False:
-                _, K, R, C, Flip = self.estimateCameraPoseFromNM(NOCSMap, NOCS, N=1000, Intrinsics=self.Intrinsics) # The rotation and translation are about the NOCS origin
+                _, K, R, C, Flip = self.estimateCameraPoseFromNM(NOCSMap, NOCS, N=self.Args.num_points, Intrinsics=self.Intrinsics) # The rotation and translation are about the NOCS origin
                 self.CamIntrinsics.append(K)
                 self.CamRots.append(R)
                 self.CamPos.append(C)
