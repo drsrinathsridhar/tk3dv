@@ -215,31 +215,49 @@ class CameraIntrinsics():
         self.PresetWidths = np.array([640, 320]) # Add more as needed
         self.PresetHeights = np.array([480, 240]) # Add more as needed
 
-        self.DistCoeffs = np.array([0, 0, 0, 0, 0, 0, 0, 0], dtype=np.float32) # Assuming 8 coeffs, all 0
+        self.DistCoeffs = np.array([0, 0, 0, 0, 0, 0, 0, 0], dtype=np.float32) # Assuming upto 8 coeffs, all 0
 
     def init_with_file(self, FileName):
         with open(FileName) as f:
             content = f.readlines()
         content = [x.strip() for x in content]
         self.Matrix = np.identity(3, np.float32)
+
+        ## SAMPLE
+        # # fx, fy, cx, cy[, w, h[, k1, k2, p1, p2, k3, k4, k5, k6]]
+        # 571, 571, 319.5, 239.5, 640, 480, 0, 0, 0, 0, 0, 0, 0, 0
+
         for line in content:
             if line[0] == '#':
                 continue
             Params = [x.strip() for x in line.split(',')]
-            if len(Params) == 4 or len(Params) == 6:
-                self.Width = self.PresetWidths[np.argmin(np.abs(self.PresetWidths - float(Params[2])*2))]
-                self.Height = self.PresetHeights[np.argmin(np.abs(self.PresetHeights - float(Params[3])*2))]
+            nParams = len(Params)
 
-                print('[ WARN ]: No image height and width passed. Finding the closest based on the principal point.')
-            elif len(Params) == 8:
-                self.Width = Params[6]
-                self.Height = Params[7]
+            if nParams != 4 and nParams != 6 and nParams != 14:
+                raise RuntimeError('[ ERR ]: Unsupported number of input parameters {}.'.format(nParams))
 
-            print('[ INFO ]: Using width, height - {}, {}.'.format(self.Width, self.Height))
-
-            self.Matrix[0, 0] = Params[0]
-            self.Matrix[1, 1] = Params[1]
+            self.Matrix[0, 0] = Params[0] # fx
+            self.Matrix[1, 1] = Params[1] # fy
             self.Matrix[0, 2] = Params[2] # cx
             self.Matrix[1, 2] = Params[3] # cy
 
+            # Width, Height
+            if nParams == 4:
+                self.Width = self.PresetWidths[np.argmin(np.abs(self.PresetWidths - float(Params[2])*2))]
+                self.Height = self.PresetHeights[np.argmin(np.abs(self.PresetHeights - float(Params[3])*2))]
+
+                print('[ WARN ]: No image height and width passed. Finding the closest standard size based on the principal point.')
+            elif nParams == 6:
+                self.Width = int(Params[4])
+                self.Height = int(Params[5])
+            elif nParams == 14:
+                self.Width = int(Params[4])
+                self.Height = int(Params[5])
+
+                for i in range(0, 8):
+                    self.DistCoeffs[i] = float(Params[6+i])
+
+
         print('[ INFO ]: Using intrinsics:\n', self.Matrix)
+        print('[ INFO ]: Using width, height - {}, {}.'.format(self.Width, self.Height))
+        print('[ INFO ]: Using distortion coeffcients:', self.DistCoeffs)

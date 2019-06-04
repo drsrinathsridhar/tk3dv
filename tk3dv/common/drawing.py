@@ -1,22 +1,31 @@
 import OpenGL.GL as gl
 import numpy as np
 
-def drawAxes(Length=100.0, LineWidth=5.0):
+def drawAxes(Length=100.0, LineWidth=5.0, Color=None):
     gl.glMatrixMode(gl.GL_MODELVIEW)
     gl.glPushMatrix()
 
     gl.glPushAttrib(gl.GL_LINE_BIT)
     gl.glLineWidth(LineWidth)
     gl.glBegin(gl.GL_LINES)
-    gl.glColor3f(1.0, 0.0, 0.0)
+    if Color is None:
+        gl.glColor3f(1.0, 0.0, 0.0)
+    else:
+        gl.glColor3fv(Color)
     gl.glVertex3f(0.0, 0.0, 0.0)
     gl.glVertex3f(Length, 0.0, 0.0)
 
-    gl.glColor3f(0.0, 1.0, 0.0)
+    if Color is None:
+        gl.glColor3f(0.0, 1.0, 0.0)
+    else:
+        gl.glColor3fv(Color)
     gl.glVertex3f(0.0, 0.0, 0.0)
     gl.glVertex3f(0.0, Length, 0.0)
 
-    gl.glColor3f(0.0, 0.0, 1.0)
+    if Color is None:
+        gl.glColor3f(0.0, 0.0, 1.0)
+    else:
+        gl.glColor3fv(Color)
     gl.glVertex3f(0.0, 0.0, 0.0)
     gl.glVertex3f(0.0, 0.0, Length)
     gl.glEnd()

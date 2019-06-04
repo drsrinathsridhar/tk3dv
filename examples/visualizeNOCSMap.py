@@ -1,4 +1,4 @@
-import sys, os, argparse, cv2, glob, math, random
+import sys, os, argparse, cv2, glob, math, random, json
 FileDirPath = os.path.dirname(os.path.realpath(__file__))
 from tk3dv import pyEasel
 from PyQt5.QtWidgets import QApplication
@@ -14,7 +14,8 @@ from tk3dv.nocstools import datastructures as ds
 from palettable.tableau import Tableau_20, BlueRed_12, ColorBlind_10, GreenOrange_12
 from palettable.cartocolors.diverging import Earth_2
 import calibration
-from tk3dv.common import drawing
+from tk3dv.common import drawing, utilities
+from tk3dv.extern import quaternions
 
 class NOCSMapModule(EaselModule):
     def __init__(self):
@@ -26,8 +27,11 @@ class NOCSMapModule(EaselModule):
         ArgGroup.add_argument('--nocs-maps', nargs='+', help='Specify input NOCS maps. * globbing is supported.', required=True)
         ArgGroup.add_argument('--colors', nargs='+', help='Specify RGB images corresponding to the input NOCS maps. * globbing is supported.', required=False)
         ArgGroup.add_argument('--intrinsics', help='Specify the intrinsics file to estimate camera pose.', required=False, default=None)
-        ArgGroup.add_argument('--no-pose', help='Choose to not estimate pose.',
-                              action='store_true')
+        ArgGroup.add_argument('--poses', nargs='+',
+                              help='Specify the camera extrinsics corresponding to the input NOCS maps. * globbing is supported.',
+                              required=False)
+
+        ArgGroup.add_argument('--no-pose', help='Choose to not estimate pose.', action='store_true')
         self.Parser.set_defaults(no_pose=False)
 
         self.Args, _ = self.Parser.parse_known_args(InputArgs)
@@ -41,6 +45,9 @@ class NOCSMapModule(EaselModule):
         self.CamPos = []
         self.CamIntrinsics = []
         self.CamFlip = [] # This is a hack
+        # Extrinsics, if provided
+        self.PosesRots = []
+        self.PosesPos = []
         self.PointSize = 3
         self.Intrinsics = None
         if self.Args.intrinsics is not None:
@@ -118,6 +125,9 @@ class NOCSMapModule(EaselModule):
 
             p, c, k, r, Flip = calibration.calculateCameraParameters(Corr)
 
+            # Rotation about z-axis by 180
+            r = utilities.rotation_matrix(np.array([0, 0, 1]), math.pi) @ r
+
             print('Full estimate:\n')
             print('R:\n', r, '\n')
             print('C:\n', c, '\n')
@@ -141,7 +151,9 @@ class NOCSMapModule(EaselModule):
     def resizeAndPad(self, Image):
         # SquareUpSize = min(self.ImageSize[0], self.ImageSize[1])
         # TODO
+        print('[ INFO ]: Original input size ', Image.shape)
         Image = cv2.resize(Image, self.ImageSize, interpolation=cv2.INTER_NEAREST)
+        print('[ INFO ]: Input resized to ', Image.shape)
 
         return Image
 
@@ -149,10 +161,13 @@ class NOCSMapModule(EaselModule):
         Palette = ColorBlind_10
         NMFiles = self.getFileNames(self.Args.nocs_maps)
         ColorFiles = [None] * len(NMFiles)
+        PoseFiles = [None] * len(NMFiles)
         if self.Args.colors is not None:
             ColorFiles = self.getFileNames(self.Args.colors)
+        if self.Args.poses is not None:
+            PoseFiles = self.getFileNames(self.Args.poses)
 
-        for (NMF, Color, CF) in zip(NMFiles, Palette.colors, ColorFiles):
+        for (NMF, Color, CF, PF) in zip(NMFiles, Palette.colors, ColorFiles, PoseFiles):
             NOCSMap = cv2.imread(NMF, -1)
             NOCSMap = NOCSMap[:, :, :3] # Ignore alpha if present
             NOCSMap = cv2.cvtColor(NOCSMap, cv2.COLOR_BGR2RGB) # IMPORTANT: OpenCV loads as BGR, so convert to RGB
@@ -174,11 +189,42 @@ class NOCSMapModule(EaselModule):
                 self.CamPos.append(C)
                 self.CamFlip.append(Flip)
 
+                if PF is not None:
+                    with open(PF) as f:
+                        data = json.load(f)
+                        # Loading convention: Flip sign of x postiion, flip signs of quaternion z, w
+                        P = np.array([data['position']['x'], data['position']['y'], data['position']['z']])
+                        Quat = np.array([data['rotation']['w'], data['rotation']['x'], data['rotation']['y'], data['rotation']['z']]) # NOTE: order is w, x, y, z
+                        # Cajole transforms to work
+                        P[0] *= -1
+                        P += 0.5
+                        Quat = np.array([Quat[0], Quat[1], -Quat[2], -Quat[3]])
+
+                        self.PosesPos.append(P)
+                        R = quaternions.quat2mat(Quat).T
+                        self.PosesRots.append(R)
+
+
         self.nNM = len(NMFiles)
         self.activeNMIdx = self.nNM # len(NMFiles) will show all
 
     def step(self):
         pass
+
+    def drawCamera(self, R, C, isF = False, Color=None):
+        gl.glPushMatrix()
+
+        ScaleRotMat = np.identity(4)
+        ScaleRotMat[:3, :3] = R
+
+        gl.glTranslate(C[0], C[1], C[2])
+        gl.glMultMatrixf(ScaleRotMat)
+        if isF:
+            gl.glRotate(180, 1, 0, 0)
+
+        Offset = 5
+        drawing.drawAxes(Offset + 0.2, Color=Color)
+        gl.glPopMatrix()
 
     def draw(self):
         gl.glMatrixMode(gl.GL_MODELVIEW)
@@ -195,23 +241,13 @@ class NOCSMapModule(EaselModule):
             if self.showBB:
                 NOCS.drawBB()
 
-        for Idx, (K, R, C, isF) in enumerate(zip(self.CamIntrinsics, self.CamRots, self.CamPos, self.CamFlip), 0):
+        for Idx, (K, R, C, R_in, C_in, isF) in enumerate(zip(self.CamIntrinsics, self.CamRots, self.CamPos, self.PosesRots, self.PosesPos, self.CamFlip), 0):
             if self.activeNMIdx != self.nNM:
                 if Idx != self.activeNMIdx:
                     continue
 
-            gl.glPushMatrix()
-
-            ScaleRotMat = np.identity(4)
-            ScaleRotMat[:3, :3] = R
-
-            gl.glTranslate(C[0], C[1], C[2])
-            gl.glMultMatrixf(ScaleRotMat)
-            if isF:
-                gl.glRotate(180, 1, 0, 0)
-
-            drawing.drawAxes(0.2)
-            gl.glPopMatrix()
+            self.drawCamera(R, C, isF)
+            self.drawCamera(R_in, C_in, False, Color=np.array([0.0, 1.0, 0.0]))
 
         if self.showNOCS:
             self.drawNOCS(lineWidth=5.0)
