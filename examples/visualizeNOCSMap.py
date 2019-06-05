@@ -206,7 +206,9 @@ class NOCSMapModule(EaselModule):
                         self.PosesPos.append(P)
                         R = quaternions.quat2mat(Quat).T
                         self.PosesRots.append(R)
-
+                else:
+                    self.PosesPos.append(None)
+                    self.PosesRots.append(None)
 
         self.nNM = len(NMFiles)
         self.activeNMIdx = self.nNM # len(NMFiles) will show all
@@ -250,7 +252,8 @@ class NOCSMapModule(EaselModule):
                     continue
 
             self.drawCamera(R, C, isF)
-            self.drawCamera(R_in, C_in, False, Color=np.array([0.0, 1.0, 0.0]))
+            if R_in is not None and C_in is not None:
+                self.drawCamera(R_in, C_in, False, Color=np.array([0.0, 1.0, 0.0]))
 
         if self.showNOCS:
             self.drawNOCS(lineWidth=5.0)
