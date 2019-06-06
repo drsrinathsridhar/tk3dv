@@ -274,6 +274,14 @@ class NOCSMapModule(EaselModule):
             self.SSCtr = self.SSCtr + 1
             self.takeSS = False
 
+            # Also serialize points
+            for Idx, NOCS in enumerate(self.NOCS):
+                if self.activeNMIdx != self.nNM:
+                    if Idx != self.activeNMIdx:
+                        continue
+                NOCS.serialize('nocs_' + str(Idx).zfill(2) + '_' + str(self.SSCtr).zfill(6) + '.obj')
+
+
     def keyPressEvent(self, a0: QKeyEvent):
         if a0.key() == QtCore.Qt.Key_Plus:  # Increase or decrease point size
             if self.PointSize < 20:

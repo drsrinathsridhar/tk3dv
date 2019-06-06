@@ -74,6 +74,12 @@ class PointSet3D(PointSet):
     def __len__(self):
         return self.Points.shape[0]
 
+    def serialize(self, OutFile):
+        with open(OutFile, 'w') as f:
+            f.write("# PointSet3D serialized file\n")
+            for i in range(self.nPoints):
+                f.write('v {:.4f} {:.4f} {:.4f}\n'.format(self.Points[i, 0], self.Points[i, 1], self.Points[i, 2]))
+
     def updateBoundingBox(self):
         self.BoundingBox[0] = np.min(self.Points, axis=0)
         self.BoundingBox[1] = np.max(self.Points, axis=0)
