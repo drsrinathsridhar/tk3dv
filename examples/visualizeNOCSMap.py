@@ -104,11 +104,23 @@ class NOCSMapModule(EaselModule):
         x = x.astype(np.float32)
 
         if Intrinsics is not None:
-            Success, rvec, tvec, _ = cv2.solvePnPRansac(X.T, x.T, Intrinsics.Matrix, Intrinsics.DistCoeffs)
+            # ---------------------------------
+            # If you are using Python:
+            # Numpy array slices won't work as input because solvePnP requires contiguous arrays (enforced by the assertion using cv::Mat::checkVector() around line 55 of modules/calib3d/src/solvepnp.cpp version 2.4.9)
+            # The P3P algorithm requires image points to be in an array of shape (N,1,2) due to its calling of cv::undistortPoints (around line 75 of modules/calib3d/src/solvepnp.cpp version 2.4.9) which requires 2-channel information.
+            # Thus, given some data D = np.array(...) where D.shape = (N,M), in order to use a subset of it as, e.g., imagePoints, one must effectively copy it into a new array: imagePoints = np.ascontiguousarray(D[:,:2]).reshape((N,1,2))
+            # ---------------------------------
 
-            # print(Success)
-            # print(rvec)
-            # print(tvec)
+            x = np.copy(x.T).reshape((MaxN, 1, 2))
+            X = np.copy(X.T).reshape((MaxN, 1, 3))
+            print(x.shape)
+            print(X.shape)
+
+            # RetVal, rvec, tvec, Inliers = cv2.solvePnPRansac(X, x, Intrinsics.Matrix, Intrinsics.DistCoeffs, iterationsCount=10000, reprojectionError=0.001, confidence=0.9999999, flags=cv2.SOLVEPNP_ITERATIVE)
+            # print(Inliers)
+            RetVal, rvec, tvec = cv2.solvePnP(X, x, Intrinsics.Matrix, Intrinsics.DistCoeffs, flags=cv2.SOLVEPNP_EPNP)
+
+            print(RetVal)
 
             k = Intrinsics.Matrix
             r, _ = cv2.Rodrigues(rvec) # Also outputs Jacobian
@@ -128,8 +140,8 @@ class NOCSMapModule(EaselModule):
 
             p, c, k, r, Flip = calibration.calculateCameraParameters(Corr)
 
-            # Rotation about z-axis by 180
-            r = utilities.rotation_matrix(np.array([0, 0, 1]), math.pi) @ r
+            # # Rotation about z-axis by 180
+            # r = utilities.rotation_matrix(np.array([0, 0, 1]), math.pi) @ r # TODO: This is incorrect
 
             print('Full estimate:\n')
             print('R:\n', r, '\n')

@@ -1,5 +1,5 @@
-import os
-import sys
+import os, sys, json
+from tk3dv.extern import quaternions
 
 import OpenGL.GL as gl
 import OpenGL.arrays.vbo as glvbo
@@ -213,7 +213,7 @@ class DepthImage3D(PointSet3D):
         super().__del__()
 
 class CameraIntrinsics():
-    def __init__(self, matrix=None):
+    def __init__(self, matrix=None, fromFile=None):
         self.Matrix = matrix
         self.Width = 0
         self.Height = 0
@@ -222,6 +222,9 @@ class CameraIntrinsics():
         self.PresetHeights = np.array([480, 240]) # Add more as needed
 
         self.DistCoeffs = np.array([0, 0, 0, 0, 0, 0, 0, 0], dtype=np.float32) # Assuming upto 8 coeffs, all 0
+
+        if fromFile is not None:
+            self.init_with_file(fromFile)
 
     def init_with_file(self, FileName):
         with open(FileName) as f:
@@ -266,4 +269,42 @@ class CameraIntrinsics():
 
         print('[ INFO ]: Using intrinsics:\n', self.Matrix)
         print('[ INFO ]: Using width, height - {}, {}.'.format(self.Width, self.Height))
-        print('[ INFO ]: Using distortion coeffcients:', self.DistCoeffs)
+        print('[ INFO ]: Using distortion coefficients:', self.DistCoeffs)
+
+class CameraExtrinsics():
+    def __init__(self, rotation=np.identity(3), translation=np.array([0, 0, 0]), fromFile=None):
+        self.Rotation = rotation
+        self.Translation = translation
+
+        if fromFile is not None:
+            self.deserialize(fromFile)
+
+    def serialize(self, OutFile):
+        print('[ WARN ]: CameraExtrinsics.serialize() not yet implemented.')
+        pass
+
+    def deserialize(self, InJSONFile):
+        with open(InJSONFile) as f:
+            data = json.load(f)
+            # Loading convention: Flip sign of x position, flip signs of quaternion z, w
+            P = np.array([data['position']['x'], data['position']['y'], data['position']['z']])
+            Quat = np.array([data['rotation']['w'], data['rotation']['x'], data['rotation']['y'],
+                             data['rotation']['z']])  # NOTE: order is w, x, y, z
+            # Cajole transforms to work
+            P[0] *= -1
+            # P += 0.5 # Hack to offset to NOCS center
+            Quat = np.array([Quat[0], Quat[1], -Quat[2], -Quat[3]])
+
+            self.Translation = P
+            R = quaternions.quat2mat(Quat).T
+            self.Rotation = R
+
+class Camera():
+    def __init__(self, Extrinsics=CameraExtrinsics(), Intrinsics=CameraIntrinsics()):
+        self.Extrinsics = Extrinsics
+        self.Intrinsics = Intrinsics
+
+    def draw(self):
+        pass
+
+
