@@ -114,9 +114,9 @@ class NOCSMapModule(EaselModule):
             x = np.copy(x.T).reshape((MaxN, 1, 2))
             X = np.copy(X.T).reshape((MaxN, 1, 3))
 
-            # RetVal, rvec, tvec, Inliers = cv2.solvePnPRansac(X, x, Intrinsics.Matrix, Intrinsics.DistCoeffs, iterationsCount=10000, reprojectionError=0.001, confidence=0.9999999, flags=cv2.SOLVEPNP_ITERATIVE)
+            RetVal, rvec, tvec, Inliers = cv2.solvePnPRansac(X, x, Intrinsics.Matrix, Intrinsics.DistCoeffs, iterationsCount=10000, reprojectionError=0.001, confidence=0.9999999, flags=cv2.SOLVEPNP_ITERATIVE)
             # print(Inliers)
-            RetVal, rvec, tvec = cv2.solvePnP(X, x, Intrinsics.Matrix, Intrinsics.DistCoeffs, flags=cv2.SOLVEPNP_EPNP)
+            # RetVal, rvec, tvec = cv2.solvePnP(X, x, Intrinsics.Matrix, Intrinsics.DistCoeffs, flags=cv2.SOLVEPNP_EPNP)
 
             # print(x.shape)
             # print(X.shape)

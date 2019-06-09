@@ -48,7 +48,7 @@ def makeOpenGLMatrices(Intrinsics, ImageShape):
     K[2, 0:-1] = Intrinsics[2, :]
     # print(K)
 
-    M = np.identity(4)
+    M = np.zeros(4)
     # TODO: Handle extrinsics
     OGLModelviewMatrix = M
     OGLModelviewMatrix[2, :] *= -1.0
