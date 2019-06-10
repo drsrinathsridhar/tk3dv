@@ -5,7 +5,7 @@ Created on 01.11.2012
 mean reprojection error: 0.551599651484px
 root mean squared reprojection error: 0.615873177017px
 '''
-import numpy, math, scipy
+import numpy, math, scipy, cv2
 from scipy import optimize
 
 # computes the 2d distance between vector a and b
@@ -23,21 +23,7 @@ def calculateCameraParameters(correspondences):
     p = dlt(normCorr)
     p = nonLinearOptimization(p, normCorr)
     p = denormalize(p, t, u)
-    c, k, r = extractCameraParameters(p)
-
-    Flip = False
-    # Ensure estimated K is an appropriate format
-    k = k / k[-1, -1]  # Should be 1
-    if k[0, 0] < 0 and k[1, 1] < 0:
-        k[0, 0] = -k[0, 0]
-        k[1, 1] = -k[1, 1]
-        Flip = False
-    if k[0, 0] < 0 and k[1, 1] >= 0:
-        k[0, 0] = -k[0, 0]
-        Flip = True
-    if k[0, 0] >= 0 and k[1, 1] < 0:
-        k[1, 1] = -k[1, 1]
-        Flip = True
+    c, k, r, Flip = extractCameraParameters(p)
 
     return p, c, k, r, Flip
 
@@ -106,13 +92,33 @@ def denormalize(p, t, u):
 # extract the camera paramters from p 
 # returns (camera center, calibration matrix, rotation matrix)
 def extractCameraParameters(p):
+    # k, r, c, _, _, _, _ = cv2.decomposeProjectionMatrix(p)
+    #
+    # return c, k, r, False
+
+    # Own implementation, seemingly slightly different from OpenCV's
     # calculate camera centre c = -A^(-1)*b, P = [A|b]
     a = p[0:3, 0:3]
     b = p[:, -1]
     c = -numpy.dot(numpy.linalg.inv(a), b)
     # rq decomposition
     k, r = scipy.linalg.rq(a)
-    return c, k, r
+
+    Flip = False
+    # Ensure estimated K is an appropriate format
+    k = k / k[-1, -1]  # Should be 1
+    if k[0, 0] < 0 and k[1, 1] < 0:
+        k[0, 0] = -k[0, 0]
+        k[1, 1] = -k[1, 1]
+        Flip = False
+    if k[0, 0] < 0 and k[1, 1] >= 0:
+        k[0, 0] = -k[0, 0]
+        Flip = True
+    if k[0, 0] >= 0 and k[1, 1] < 0:
+        k[1, 1] = -k[1, 1]
+        Flip = True
+
+    return c, k, r, Flip
 
 
 def reprojectionError(p, correspondences):
