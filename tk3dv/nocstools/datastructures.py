@@ -304,7 +304,19 @@ class Camera():
         self.Extrinsics = Extrinsics
         self.Intrinsics = Intrinsics
 
-    def draw(self):
-        pass
+    def draw(self, Color=None, isF = False, Length=5.0):
+        gl.glPushMatrix()
+
+        ScaleRotMat = np.identity(4)
+        R, C = self.Extrinsics.Rotation, self.Extrinsics.Translation
+        ScaleRotMat[:3, :3] = R
+
+        gl.glTranslate(C[0], C[1], C[2])
+        gl.glMultMatrixf(ScaleRotMat)
+        if isF:
+            gl.glRotate(180, 1, 0, 0)
+
+        drawing.drawAxes(Length, Color=Color)
+        gl.glPopMatrix()
 
 

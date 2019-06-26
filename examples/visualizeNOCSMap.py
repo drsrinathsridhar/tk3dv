@@ -43,6 +43,7 @@ class NOCSMapModule(EaselModule):
 
         self.NOCSMaps = []
         self.NOCS = []
+        self.Cameras = []
         self.CamRots = []
         self.CamPos = []
         self.CamIntrinsics = []
@@ -203,6 +204,7 @@ class NOCSMapModule(EaselModule):
                 self.CamRots.append(R)
                 self.CamPos.append(C)
                 self.CamFlip.append(Flip)
+                self.Cameras.append(ds.Camera(ds.CameraExtrinsics(self.CamRots[-1], self.CamPos[-1]), ds.CameraIntrinsics(self.CamIntrinsics[-1])))
 
                 if PF is not None:
                     with open(PF) as f:
@@ -263,7 +265,8 @@ class NOCSMapModule(EaselModule):
                 if Idx != self.activeNMIdx:
                     continue
 
-            self.drawCamera(R, C, isF)
+            # self.drawCamera(R, C, isF)
+            self.Cameras[Idx].draw(isF=isF)
             if R_in is not None and C_in is not None:
                 self.drawCamera(R_in, C_in, False, Color=np.array([0.0, 1.0, 0.0]))
 
