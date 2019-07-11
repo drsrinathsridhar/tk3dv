@@ -23,7 +23,7 @@ VERSION = '0.1'
 # What packages are required for this module to be executed?
 REQUIRED = [
     'tk3dv',
-    'numpy>=1.15.4', 'PyOpenGL>=3.1.0', 'PyQt5>=5.11.3', 'opencv-python<=3.2.0.8',
+    'numpy>=1.15.4', 'PyOpenGL>=3.1.0', 'PyQt5>=5.11.3', 'opencv-python>=3.2.0.8',
     # 'torch>=1.0.1', # Problems installing torch via pip on Windows, so install manually at https://pytorch.org/
     'torchvision>=0.2.2', 'palettable>=3.1.1', 'requests>=2.21.0'
 ]
