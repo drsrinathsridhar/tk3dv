@@ -50,7 +50,8 @@ class VGVizModule(EaselModule):
             gl.glPushMatrix()
             gl.glTranslate(self.VGNZ[0][i], self.VGNZ[1][i], self.VGNZ[2][i])
             drawing.drawUnitWireCube(lineWidth=2.0, WireColor=(0, 0, 0))
-            drawing.drawUnitCube(Alpha=Alpha, Color=(101 / 255, 67 / 255, 33 / 255))
+            # drawing.drawUnitCube(Alpha=Alpha, Color=(101 / 255, 67 / 255, 33 / 255))
+            drawing.drawUnitCube(isRainbow=True, Alpha=Alpha)
             gl.glPopMatrix()
 
         gl.glPopMatrix()

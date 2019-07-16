@@ -9,46 +9,6 @@ FileDirPath = os.path.dirname(__file__)
 sys.path.append(os.path.join(FileDirPath, '..'))
 from tk3dv.common import drawing
 
-def backproject(DepthImage, Intrinsics, mask=None):
-    # OutPoints = np.zeros([0, 3])  # Each point is a row
-
-    # Depth image should be (DepthImage.shape) == 2 and DepthImage.dtype == 'uint16':
-
-    # # Back project and add
-    # if mask is None:
-    #     DepthIdx = np.where(DepthImage > 0)
-    # else:
-    #     DepthIdx = np.where((mask >= 255))
-    # IntrinsicsInv = np.linalg.inv(Intrinsics)
-    # for i in range(0, DepthIdx[0].shape[0]):
-    #     zVal = DepthImage[DepthIdx[0][i], DepthIdx[1][i]]
-    #     UV = np.array([DepthIdx[1][i], DepthIdx[0][i], 1])  # Row/col to uv
-    #     XYZ = np.dot(IntrinsicsInv, UV)
-    #     XYZ = XYZ * (zVal / XYZ[2])
-    #     # Because of differences in image coordinate systems
-    #     OutPoints = np.vstack([OutPoints, np.array([-XYZ[0], -XYZ[1], XYZ[2]])])
-
-    IntrinsicsInv = np.linalg.inv(Intrinsics)
-
-    non_zero_mask = (DepthImage >= 0)
-    idxs = np.where(non_zero_mask)
-    grid = np.array([idxs[1], idxs[0]])
-
-    length = grid.shape[1]
-    ones = np.ones([1, length])
-    uv_grid = np.concatenate((grid, ones), axis=0)  # [3, num_pixel]
-
-    xyz = IntrinsicsInv @ uv_grid  # [3, num_pixel]
-    xyz = np.transpose(xyz)  # [num_pixel, 3]
-
-    z = DepthImage[idxs[0], idxs[1]]
-    pts = xyz * z[:, np.newaxis] / xyz[:, -1:]
-    pts[:, 0] = -pts[:, 0]
-    pts[:, 1] = -pts[:, 1]
-    OutPoints = pts
-
-    return OutPoints
-
 class PointSet():
     def __init__(self):
         self.Points = None
@@ -155,12 +115,7 @@ class PointSet3D(PointSet):
 
         gl.glPopAttrib()
 
-class OBJPointSet3D(PointSet3D):
-    def __init__(self, OBJPath):
-        if os.path.exists(OBJPath) == False:
-            print('[ WARN ]: File does not exist:', OBJPath)
-
-class NOCSMap3D(PointSet3D):
+class NOCSMap(PointSet3D):
     def __init__(self, NOCSMap, RGB=None, Color=None):
         super().__init__()
         self.createNOCSFromNM(NOCSMap, RGB, Color)
@@ -183,6 +138,77 @@ class NOCSMap3D(PointSet3D):
 
     def __del__(self):
         super().__del__()
+
+class VoxelGrid(PointSet3D)
+    def __init__(self, BinVoxGrid):
+        super().__init__()
+        self.VG = BinVoxGrid
+        self.VGNZ = np.nonzero(self.VG.data)
+
+    def draw(self, Alpha=0.8, ScaleX=1, ScaleY=1, ScaleZ=1):
+        gl.glMatrixMode(gl.GL_MODELVIEW)
+        gl.glPushMatrix()
+        gl.glScale(ScaleX, ScaleY, ScaleZ)
+
+        GridSize = self.VG.dims[0]
+
+        gl.glPushMatrix()
+        gl.glScale(1 / GridSize, 1 / GridSize, 1 / GridSize)
+
+        # TODO: Create a VoxelGrid class in nocstools and add VBO based drawing to it
+        # Add VBO-based drawing for cubes, gorund plane, etc.
+
+        for i in range(0, len(self.VGNZ[0])):
+            gl.glPushMatrix()
+            gl.glTranslate(self.VGNZ[0][i], self.VGNZ[1][i], self.VGNZ[2][i])
+            drawing.drawUnitWireCube(lineWidth=2.0, WireColor=(0, 0, 0))
+            drawing.drawUnitCube(Alpha=Alpha, Color=(101 / 255, 67 / 255, 33 / 255))
+            gl.glPopMatrix()
+
+        gl.glPopMatrix()
+        gl.glPopMatrix()
+
+
+
+def backproject(DepthImage, Intrinsics, mask=None):
+    # OutPoints = np.zeros([0, 3])  # Each point is a row
+
+    # Depth image should be (DepthImage.shape) == 2 and DepthImage.dtype == 'uint16':
+
+    # # Back project and add
+    # if mask is None:
+    #     DepthIdx = np.where(DepthImage > 0)
+    # else:
+    #     DepthIdx = np.where((mask >= 255))
+    # IntrinsicsInv = np.linalg.inv(Intrinsics)
+    # for i in range(0, DepthIdx[0].shape[0]):
+    #     zVal = DepthImage[DepthIdx[0][i], DepthIdx[1][i]]
+    #     UV = np.array([DepthIdx[1][i], DepthIdx[0][i], 1])  # Row/col to uv
+    #     XYZ = np.dot(IntrinsicsInv, UV)
+    #     XYZ = XYZ * (zVal / XYZ[2])
+    #     # Because of differences in image coordinate systems
+    #     OutPoints = np.vstack([OutPoints, np.array([-XYZ[0], -XYZ[1], XYZ[2]])])
+
+    IntrinsicsInv = np.linalg.inv(Intrinsics)
+
+    non_zero_mask = (DepthImage >= 0)
+    idxs = np.where(non_zero_mask)
+    grid = np.array([idxs[1], idxs[0]])
+
+    length = grid.shape[1]
+    ones = np.ones([1, length])
+    uv_grid = np.concatenate((grid, ones), axis=0)  # [3, num_pixel]
+
+    xyz = IntrinsicsInv @ uv_grid  # [3, num_pixel]
+    xyz = np.transpose(xyz)  # [num_pixel, 3]
+
+    z = DepthImage[idxs[0], idxs[1]]
+    pts = xyz * z[:, np.newaxis] / xyz[:, -1:]
+    pts[:, 0] = -pts[:, 0]
+    pts[:, 1] = -pts[:, 1]
+    OutPoints = pts
+
+    return OutPoints
 
 class DepthImage3D(PointSet3D):
     def __init__(self, DepthImage, Intrinsics, mask=None):
