@@ -1,7 +1,10 @@
 import sys, os, argparse
 from tk3dv.extern.binvox import binvox_rw
 from tk3dv.common import drawing
+import tk3dv.nocstools.datastructures as ds
 from PyQt5.QtWidgets import QApplication
+import PyQt5.QtCore as QtCore
+from PyQt5.QtGui import QKeyEvent, QMouseEvent, QWheelEvent
 import numpy as np
 
 from tk3dv.pyEasel import *
@@ -27,35 +30,27 @@ class VGVizModule(EaselModule):
         with open(self.Args.voxel_grid, 'rb') as f:
             self.VG = binvox_rw.read_as_3d_array(f)
 
-        print('[ INFO ]: Opened voxel grid of dimension:', self.VG.dims)
-        self.VGNZ = np.nonzero(self.VG.data)
+        self.VGDS = ds.VoxelGrid(self.VG)
+
+        self.PointSize = 3
+        self.showObjIdx = 0 # 0, 1, 2
 
     def step(self):
         pass
 
     def drawVG(self, Alpha=0.8, ScaleX=1, ScaleY=1, ScaleZ=1):
-        gl.glMatrixMode(gl.GL_MODELVIEW)
-        gl.glPushMatrix()
-        gl.glScale(ScaleX, ScaleY, ScaleZ)
 
-        GridSize = self.VG.dims[0]
+        if self.showObjIdx == 0 or self.showObjIdx == 1:
+            self.VGDS.drawVG(Alpha, ScaleX, ScaleY, ScaleZ)
 
-        gl.glPushMatrix()
-        gl.glScale(1 / GridSize, 1 / GridSize, 1 / GridSize)
-
-        # TODO: Create a VoxelGrid class in nocstools and add VBO based drawing to it
-        # Add VBO-based drawing for cubes, gorund plane, etc.
-
-        for i in range(0, len(self.VGNZ[0])):
+        if self.showObjIdx == 0 or self.showObjIdx == 2:
+            gl.glMatrixMode(gl.GL_MODELVIEW)
             gl.glPushMatrix()
-            gl.glTranslate(self.VGNZ[0][i], self.VGNZ[1][i], self.VGNZ[2][i])
-            drawing.drawUnitWireCube(lineWidth=2.0, WireColor=(0, 0, 0))
-            # drawing.drawUnitCube(Alpha=Alpha, Color=(101 / 255, 67 / 255, 33 / 255))
-            drawing.drawUnitCube(isRainbow=True, Alpha=Alpha)
-            gl.glPopMatrix()
+            gl.glScale(ScaleX, ScaleY, ScaleZ)
 
-        gl.glPopMatrix()
-        gl.glPopMatrix()
+            self.VGDS.draw(pointSize=self.PointSize)
+
+            gl.glPopMatrix()
 
     def draw(self):
         gl.glMatrixMode(gl.GL_MODELVIEW)
@@ -65,6 +60,18 @@ class VGVizModule(EaselModule):
         self.drawVG(0.7, 40, 40, 40)
 
         gl.glPopMatrix()
+
+    def keyPressEvent(self, a0: QKeyEvent):
+        if a0.key() == QtCore.Qt.Key_Plus:  # Increase or decrease point size
+            if self.PointSize < 20:
+                self.PointSize = self.PointSize + 1
+
+        if a0.key() == QtCore.Qt.Key_Minus:  # Increase or decrease point size
+            if self.PointSize > 1:
+                self.PointSize = self.PointSize - 1
+
+        if a0.key() == QtCore.Qt.Key_T:  # Toggle objects
+            self.showObjIdx = (self.showObjIdx + 1)%(3)
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)

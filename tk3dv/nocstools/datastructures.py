@@ -1,4 +1,4 @@
-import os, sys, json
+import os, sys, json, ctypes
 from tk3dv.extern import quaternions
 
 import OpenGL.GL as gl
@@ -7,7 +7,7 @@ import numpy as np
 
 FileDirPath = os.path.dirname(__file__)
 sys.path.append(os.path.join(FileDirPath, '..'))
-from tk3dv.common import drawing
+from tk3dv.common import drawing, utilities
 
 class PointSet():
     def __init__(self):
@@ -139,78 +139,154 @@ class NOCSMap(PointSet3D):
     def __del__(self):
         super().__del__()
 
-class VoxelGrid(PointSet3D)
+class VoxelGrid(PointSet3D):
     def __init__(self, BinVoxGrid):
         super().__init__()
         self.VG = BinVoxGrid
+        self.GridSize = self.VG.dims[0]
         self.VGNZ = np.nonzero(self.VG.data)
+        # We are treating VoxelGrid as a point cloud with unit cube sie limits
+        # All 'on' voxels are a point in the point cloud. The center of a voxel is the position of the point
+        self.DefaultColor = (101 / 255, 67 / 255, 33 / 255)
+        self.VGCorners = np.zeros([0, 3])  # Each point is a row
+        self.VGColors = np.zeros([0, 3])  # Each point is a row
+        self.VGIndices = np.zeros([0, 3])  # Each row is a face
+        self.VGVBO = []
+        self.nVGCorners = 0
+        self.isVBOBound = False
 
-    def draw(self, Alpha=0.8, ScaleX=1, ScaleY=1, ScaleZ=1):
+        self.createVG()
+
+    def update(self):
+        super().update()
+        self.createVGVBO()
+
+    def createVGVBO(self):
+        self.nVGCorners = int(len(self.VGCorners) / 3)
+        self.VBOPoints = glvbo.VBO(self.VGCorners)
+        self.VBOColors = glvbo.VBO(self.VGColors)
+        self.VBOIndices = glvbo.VBO(self.VGIndices)
+
+        # self.VGVBO = gl.glGenBuffers(3)
+        # gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.VGVBO[0])
+        # gl.glBufferData(gl.GL_ARRAY_BUFFER,
+        #                 len(self.VGCorners) * 4,  # byte size
+        #                 (ctypes.c_float * len(self.VGCorners))(*self.VGCorners),
+        #                 gl.GL_STATIC_DRAW)
+        # gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.VGVBO[1])
+        # gl.glBufferData(gl.GL_ARRAY_BUFFER,
+        #                 len(self.VGColors) * 4,  # byte size
+        #                 (ctypes.c_float * len(self.VGColors))(*self.VGColors),
+        #                 gl.GL_STATIC_DRAW)
+        # gl.glBindBuffer(gl.GL_ELEMENT_ARRAY_BUFFER, self.VGVBO[2])
+        # gl.glBufferData(gl.GL_ELEMENT_ARRAY_BUFFER,
+        #                 len(self.VGIndices) * 4,  # byte size
+        #                 (ctypes.c_uint * len(self.VGIndices))(*self.VGIndices),
+        #                 gl.GL_STATIC_DRAW)
+
+        self.isVBOBound = True
+
+    def createVG(self, Color=None):
+        for i in range(0, len(self.VGNZ[0])):
+            VoxelCenter = (np.array([self.VGNZ[0][i], self.VGNZ[1][i], self.VGNZ[2][i]]) + 0.5) / self.GridSize
+            self.add(VoxelCenter[0], VoxelCenter[1], VoxelCenter[2])
+
+            # Create vertices of voxels
+            VO = (np.array([self.VGNZ[0][i], self.VGNZ[1][i], self.VGNZ[2][i]])) / self.GridSize # Voxel origin
+            VS = 1 / self.GridSize # Voxel side
+            Corners = [
+                        VO[0], VO[1], VO[2],
+                        VO[0] + VS, VO[1], VO[2],
+                        VO[0] + VS, VO[1] + VS, VO[2],
+                        VO[0], VO[1] + VS, VO[2],
+                        VO[0], VO[1] + VS, VO[2] + VS,
+                        VO[0] + VS, VO[1] + VS, VO[2] + VS,
+                        VO[0] + VS, VO[1], VO[2] + VS,
+                        VO[0], VO[1], VO[2] + VS,
+                    ]
+            self.VGCorners = np.vstack([self.VGCorners, np.asarray(Corners).reshape((-1, 3))])
+
+            SI = i * 36 # start index
+            Indices = [
+                    SI+0, SI+1, SI+2, SI+2, SI+3, SI+0,
+                    SI+0, SI+3, SI+4, SI+4, SI+7, SI+0,
+                    SI+4, SI+7, SI+6, SI+6, SI+5, SI+4,
+                    SI+0, SI+7, SI+6, SI+6, SI+1, SI+0,
+                    SI+1, SI+6, SI+5, SI+5, SI+2, SI+1,
+                    SI+3, SI+4, SI+5, SI+5, SI+2, SI+3,
+                    ]
+            self.VGIndices = np.vstack([self.VGIndices, np.asarray(Indices).reshape((-1, 3))])
+
+            if Color is None:
+                Color = self.DefaultColor
+            for kk in range(0, 8):
+                self.VGColors = np.vstack([self.VGColors, np.asarray(Color).reshape((-1, 3))])
+
+        print(self.VGCorners.shape)
+        print(self.VGColors.shape)
+        print(self.VGIndices.shape)
+
+        self.update()
+
+    def drawVG(self, Alpha=0.8, ScaleX=1, ScaleY=1, ScaleZ=1):
+        if self.isVBOBound == False:
+            print('[ WARN ]: Voxel grid VBOs not bound.')
+
+        gl.glPushAttrib(gl.GL_POINT_BIT)
+        gl.glPointSize(20)
+
         gl.glMatrixMode(gl.GL_MODELVIEW)
         gl.glPushMatrix()
         gl.glScale(ScaleX, ScaleY, ScaleZ)
 
-        GridSize = self.VG.dims[0]
+        self.VBOPoints.bind()
+        gl.glEnableClientState(gl.GL_VERTEX_ARRAY)
+        gl.glVertexPointer(3, gl.GL_DOUBLE, 0, self.VBOPoints)
 
-        gl.glPushMatrix()
-        gl.glScale(1 / GridSize, 1 / GridSize, 1 / GridSize)
+        self.VBOColors.bind()
+        gl.glEnableClientState(gl.GL_COLOR_ARRAY)
+        gl.glColorPointer(3, gl.GL_DOUBLE, 0, self.VBOColors)
 
-        # TODO: Create a VoxelGrid class in nocstools and add VBO based drawing to it
-        # Add VBO-based drawing for cubes, gorund plane, etc.
+        gl.glDrawArrays(gl.GL_POINTS, 0, self.nVGCorners)
 
-        for i in range(0, len(self.VGNZ[0])):
-            gl.glPushMatrix()
-            gl.glTranslate(self.VGNZ[0][i], self.VGNZ[1][i], self.VGNZ[2][i])
-            drawing.drawUnitWireCube(lineWidth=2.0, WireColor=(0, 0, 0))
-            drawing.drawUnitCube(Alpha=Alpha, Color=(101 / 255, 67 / 255, 33 / 255))
-            gl.glPopMatrix()
+        gl.glDisableClientState(gl.GL_COLOR_ARRAY)
+        gl.glDisableClientState(gl.GL_VERTEX_ARRAY)
 
+        gl.glPopAttrib()
+
+
+        # gl.glEnableClientState(gl.GL_VERTEX_ARRAY)
+        # gl.glEnableClientState(gl.GL_COLOR_ARRAY)
+        # gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.VGVBO[0])
+        # gl.glVertexPointer(3, gl.GL_FLOAT, 0, None)
+        # gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.VGVBO[1])
+        # gl.glColorPointer(3, gl.GL_FLOAT, 0, None)
+        # gl.glBindBuffer(gl.GL_ELEMENT_ARRAY_BUFFER, self.VGVBO[2])
+        # gl.glDrawElements(gl.GL_LINE_STRIP, len(self.VGIndices), gl.GL_UNSIGNED_INT, None)
+        # gl.glDisableClientState(gl.GL_COLOR_ARRAY)
+        # gl.glDisableClientState(gl.GL_VERTEX_ARRAY)
+        #
+        # GridSize = self.VG.dims[0]
+        #
+        # gl.glPushMatrix()
+        # gl.glScale(1 / GridSize, 1 / GridSize, 1 / GridSize)
+        #
+        # # TODO: Create a VoxelGrid class in nocstools and add VBO based drawing to it
+        # # Add VBO-based drawing for cubes, gorund plane, etc.
+        #
+        # for i in range(0, len(self.VGNZ[0])):
+        #     gl.glPushMatrix()
+        #     gl.glTranslate(self.VGNZ[0][i], self.VGNZ[1][i], self.VGNZ[2][i])
+        #     drawing.drawUnitWireCube(lineWidth=2.0, WireColor=(0, 0, 0))
+        #     drawing.drawUnitCube(Alpha=Alpha, Color=self.DefaultColor)
+        #     gl.glPopMatrix()
+        #
+        # gl.glPopMatrix()
+        #
         gl.glPopMatrix()
-        gl.glPopMatrix()
 
 
-
-def backproject(DepthImage, Intrinsics, mask=None):
-    # OutPoints = np.zeros([0, 3])  # Each point is a row
-
-    # Depth image should be (DepthImage.shape) == 2 and DepthImage.dtype == 'uint16':
-
-    # # Back project and add
-    # if mask is None:
-    #     DepthIdx = np.where(DepthImage > 0)
-    # else:
-    #     DepthIdx = np.where((mask >= 255))
-    # IntrinsicsInv = np.linalg.inv(Intrinsics)
-    # for i in range(0, DepthIdx[0].shape[0]):
-    #     zVal = DepthImage[DepthIdx[0][i], DepthIdx[1][i]]
-    #     UV = np.array([DepthIdx[1][i], DepthIdx[0][i], 1])  # Row/col to uv
-    #     XYZ = np.dot(IntrinsicsInv, UV)
-    #     XYZ = XYZ * (zVal / XYZ[2])
-    #     # Because of differences in image coordinate systems
-    #     OutPoints = np.vstack([OutPoints, np.array([-XYZ[0], -XYZ[1], XYZ[2]])])
-
-    IntrinsicsInv = np.linalg.inv(Intrinsics)
-
-    non_zero_mask = (DepthImage >= 0)
-    idxs = np.where(non_zero_mask)
-    grid = np.array([idxs[1], idxs[0]])
-
-    length = grid.shape[1]
-    ones = np.ones([1, length])
-    uv_grid = np.concatenate((grid, ones), axis=0)  # [3, num_pixel]
-
-    xyz = IntrinsicsInv @ uv_grid  # [3, num_pixel]
-    xyz = np.transpose(xyz)  # [num_pixel, 3]
-
-    z = DepthImage[idxs[0], idxs[1]]
-    pts = xyz * z[:, np.newaxis] / xyz[:, -1:]
-    pts[:, 0] = -pts[:, 0]
-    pts[:, 1] = -pts[:, 1]
-    OutPoints = pts
-
-    return OutPoints
-
-class DepthImage3D(PointSet3D):
+class DepthImage(PointSet3D):
     def __init__(self, DepthImage, Intrinsics, mask=None):
         super().__init__()
         self.createFromDepthImage(DepthImage, Intrinsics, mask)
@@ -228,7 +304,7 @@ class DepthImage3D(PointSet3D):
             print('[ WARN ]: Unsupported depth type.')
             return
 
-        self.Points = backproject(DepthImage, Intrinsics, mask)
+        self.Points = utilities.backproject(DepthImage, Intrinsics, mask)
         self.Colors = np.zeros_like(self.Points)
 
         # print('Max depth:', np.max(self.Points[:, 2]))

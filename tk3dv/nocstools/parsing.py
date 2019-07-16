@@ -70,7 +70,7 @@ class PoseRCNNInput():
             NOCIm = self.NOCImages[Idx]
             DepIm = self.DepthImages[Idx]
             if DEBUG == False:
-                Metric = ds.DepthImage3D(DepIm, self.Intrinsics.Matrix)
+                Metric = ds.DepthImage(DepIm, self.Intrinsics.Matrix)
             else:
                 Metric = ds.PointSet3D() # DEBUG
             ColIm = self.RGBs[Idx]
@@ -162,7 +162,7 @@ class PoseRCNNInputOverlapping(PoseRCNNInput):
             NOC = ds.PointSet3D()
             NOCIm = self.NOCImages[Idx]
             DepIm = self.DepthImages[Idx]
-            Metric = ds.DepthImage3D(DepIm, self.Intrinsics.Matrix, mask=self.Masks[Idx])
+            Metric = ds.DepthImage(DepIm, self.Intrinsics.Matrix, mask=self.Masks[Idx])
             ColIm = self.RGBs[Idx]
             IDMask = self.Masks[Idx]
             MaskIdx = np.where((IDMask >= 255))
