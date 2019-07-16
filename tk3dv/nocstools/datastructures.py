@@ -148,9 +148,9 @@ class VoxelGrid(PointSet3D):
         # We are treating VoxelGrid as a point cloud with unit cube sie limits
         # All 'on' voxels are a point in the point cloud. The center of a voxel is the position of the point
         self.DefaultColor = (101 / 255, 67 / 255, 33 / 255)
-        self.VGCorners = np.zeros([0, 3])  # Each point is a row
-        self.VGColors = np.zeros([0, 3])  # Each point is a row
-        self.VGIndices = np.zeros([0, 3])  # Each row is a face
+        self.VGCorners = np.zeros([0, 3], dtype=np.float)  # Each point is a row
+        self.VGColors = np.zeros([0, 3], dtype=np.float)  # Each point is a row
+        self.VGIndices = np.zeros([0, 3], dtype=np.uint32)  # Each row is a face
         self.VGVBO = []
         self.nVGCorners = 0
         self.isVBOBound = False
@@ -165,7 +165,7 @@ class VoxelGrid(PointSet3D):
         self.nVGCorners = int(len(self.VGCorners) / 3)
         self.VBOPoints = glvbo.VBO(self.VGCorners)
         self.VBOColors = glvbo.VBO(self.VGColors)
-        self.VBOIndices = glvbo.VBO(self.VGIndices)
+        self.VBOIndices = glvbo.VBO(self.VGIndices, target=gl.GL_ELEMENT_ARRAY_BUFFER)
 
         # self.VGVBO = gl.glGenBuffers(3)
         # gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.VGVBO[0])
@@ -248,9 +248,14 @@ class VoxelGrid(PointSet3D):
         gl.glColorPointer(3, gl.GL_DOUBLE, 0, self.VBOColors)
 
         gl.glDrawArrays(gl.GL_POINTS, 0, self.nVGCorners)
-
+        # self.VBOIndices.bind()
+        # gl.glEnableClientState(gl.GL_INDEX_ARRAY)
+        # gl.glIndexPointer(3, gl.GL_UNSIGNED_INT, 0, self.VBOIndices)
+        # gl.glDrawElements(gl.GL_TRIANGLES, self.VGIndices.shape[0], gl.GL_UNSIGNED_INT, None)
+        #
         gl.glDisableClientState(gl.GL_COLOR_ARRAY)
         gl.glDisableClientState(gl.GL_VERTEX_ARRAY)
+        gl.glDisableClientState(gl.GL_INDEX_ARRAY)
 
         gl.glPopAttrib()
 
