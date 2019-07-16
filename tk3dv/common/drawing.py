@@ -1,5 +1,6 @@
 import OpenGL.GL as gl
 import numpy as np
+import ctypes
 
 def drawAxes(Length=100.0, LineWidth=5.0, Color=None):
     gl.glMatrixMode(gl.GL_MODELVIEW)
@@ -94,60 +95,107 @@ def activateCamera(Intrinsics, ImageShape):
     # Adding this rotation makes it right
     gl.glRotatef(180.0, 0.0, 0.0, 1.0)
 
+
+# TODO: Need to fix order of lines
+UNITCUBE_V=[
+        0, 0, 0,
+        1, 0, 0,
+        1, 1, 0,
+        0, 1, 0,
+        0, 0, 1,
+        1, 0, 1,
+        1, 1, 1,
+        0, 1, 1,
+]
+UNITCUBE_C=[
+        0, 0, 0,
+        1, 0, 0,
+        1, 1, 0,
+        0, 1, 0,
+        0, 0, 1,
+        1, 0, 1,
+        1, 1, 1,
+        0, 1, 1,
+        ]
+UNITCUBE_I=[
+        0, 1, 2, 2, 3, 0,
+        0, 4, 5, 5, 1, 0,
+        1, 5, 6, 6, 2, 1,
+        2, 6, 7, 7, 3, 2,
+        3, 7, 4, 4, 0, 3,
+        4, 7, 6, 6, 5, 4,
+        ]
+
+UNITCUBE_BUF=None
+def createUnitCubeVBO():
+    global UNITCUBE_BUF
+    UNITCUBE_BUF = gl.glGenBuffers(3)
+    gl.glBindBuffer(gl.GL_ARRAY_BUFFER, UNITCUBE_BUF[0])
+    gl.glBufferData(gl.GL_ARRAY_BUFFER,
+            len(UNITCUBE_V)*4,  # byte size
+            (ctypes.c_float*len(UNITCUBE_V))(*UNITCUBE_V),
+            gl.GL_STATIC_DRAW)
+    gl.glBindBuffer(gl.GL_ARRAY_BUFFER, UNITCUBE_BUF[1])
+    gl.glBufferData(gl.GL_ARRAY_BUFFER,
+            len(UNITCUBE_C)*4, # byte size
+            (ctypes.c_float*len(UNITCUBE_C))(*UNITCUBE_C),
+            gl.GL_STATIC_DRAW)
+    gl.glBindBuffer(gl.GL_ELEMENT_ARRAY_BUFFER, UNITCUBE_BUF[2])
+    gl.glBufferData(gl.GL_ELEMENT_ARRAY_BUFFER,
+            len(UNITCUBE_I)*4, # byte size
+            (ctypes.c_uint*len(UNITCUBE_I))(*UNITCUBE_I),
+            gl.GL_STATIC_DRAW)
+
+
 def drawUnitWireCube(lineWidth=1.0, isRainbow=False, WireColor=(1, 1, 1)):
     # Draws a cube of size 1 centered at 0.5, 0.5, 0.5
     gl.glPushAttrib(gl.GL_LINE_WIDTH)
     gl.glLineWidth(lineWidth)
 
     gl.glColor3f(WireColor[0], WireColor[1], WireColor[2])
-    for i in range(0, 2):
-        gl.glBegin(gl.GL_LINE_LOOP)
-        # Bottom and Top
-        if isRainbow:
-            gl.glColor3f(0.0, 0.0, i)
-        gl.glVertex3f(0.0, 0.0, i)
-        if isRainbow:
-            gl.glColor3f(1.0, 0.0, i)
-        gl.glVertex3f(1.0, 0.0, i)
-        if isRainbow:
-            gl.glColor3f(1.0, 1.0, i)
-        gl.glVertex3f(1.0, 1.0, i)
-        if isRainbow:
-            gl.glColor3f(0.0, 1.0, i)
-        gl.glVertex3f(0.0, 1.0, i)
-        gl.glEnd()
 
-        gl.glBegin(gl.GL_LINE_LOOP)
-        # Right and Left
-        if isRainbow:
-            gl.glColor3f(i, 0.0, 0.0)
-        gl.glVertex3f(i, 0.0, 0.0)
-        if isRainbow:
-            gl.glColor3f(i, 1.0, 0.0)
-        gl.glVertex3f(i, 1.0, 0.0)
-        if isRainbow:
-            gl.glColor3f(i, 1.0, 1.0)
-        gl.glVertex3f(i, 1.0, 1.0)
-        if isRainbow:
-            gl.glColor3f(i, 0.0, 1.0)
-        gl.glVertex3f(i, 0.0, 1.0)
-        gl.glEnd()
+    # gl.glBegin(gl.GL_LINE_LOOP)
+    # for i in range(0, len(UNITCUBE_I), 3):
+    #     index=UNITCUBE_I[i]*3
+    #     if isRainbow:
+    #         gl.glColor3f(*UNITCUBE_C[index:index+3])
+    #     gl.glVertex3f(*UNITCUBE_V[index:index+3])
+    #
+    #     index=UNITCUBE_I[i+1]*3
+    #     if isRainbow:
+    #         gl.glColor3f(*UNITCUBE_C[index:index+3])
+    #     gl.glVertex3f(*UNITCUBE_V[index:index+3])
+    #
+    #     index=UNITCUBE_I[i+2]*3
+    #     if isRainbow:
+    #         gl.glColor3f(*UNITCUBE_C[index:index+3])
+    #     gl.glVertex3f(*UNITCUBE_V[index:index+3])
+    # gl.glEnd()
 
-        gl.glBegin(gl.GL_LINE_LOOP)
-        # Front and Back
-        if isRainbow:
-            gl.glColor3f(0.0, i, 0.0)
-        gl.glVertex3f(0.0, i, 0.0)
-        if isRainbow:
-            gl.glColor3f(1.0, i, 0.0)
-        gl.glVertex3f(1.0, i, 0.0)
-        if isRainbow:
-            gl.glColor3f(1.0, i, 1.0)
-        gl.glVertex3f(1.0, i, 1.0)
-        if isRainbow:
-            gl.glColor3f(0.0, i, 1.0)
-        gl.glVertex3f(0.0, i, 1.0)
-        gl.glEnd()
+    # METHOD 2
+    # gl.glEnableClientState(gl.GL_VERTEX_ARRAY)
+    # gl.glEnableClientState(gl.GL_COLOR_ARRAY)
+    # gl.glVertexPointer(3, gl.GL_FLOAT, 0, UNITCUBE_V)
+    # if isRainbow:
+    #     gl.glColorPointer(3, gl.GL_FLOAT, 0, UNITCUBE_C)
+    # gl.glDrawElements(gl.GL_LINE_LOOP, len(UNITCUBE_I), gl.GL_UNSIGNED_INT, UNITCUBE_I)
+    # gl.glDisableClientState(gl.GL_COLOR_ARRAY)
+    # gl.glDisableClientState(gl.GL_VERTEX_ARRAY)
+
+    if UNITCUBE_BUF is None:
+        createUnitCubeVBO()
+
+    gl.glEnableClientState(gl.GL_VERTEX_ARRAY)
+    gl.glEnableClientState(gl.GL_COLOR_ARRAY)
+    gl.glBindBuffer(gl.GL_ARRAY_BUFFER, UNITCUBE_BUF[0])
+    gl.glVertexPointer(3, gl.GL_FLOAT, 0, None)
+    if isRainbow:
+        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, UNITCUBE_BUF[1])
+        gl.glColorPointer(3, gl.GL_FLOAT, 0, None)
+    gl.glBindBuffer(gl.GL_ELEMENT_ARRAY_BUFFER, UNITCUBE_BUF[2])
+    gl.glDrawElements(gl.GL_LINE_LOOP, len(UNITCUBE_I), gl.GL_UNSIGNED_INT, None)
+    gl.glDisableClientState(gl.GL_COLOR_ARRAY)
+    gl.glDisableClientState(gl.GL_VERTEX_ARRAY)
 
     gl.glPopAttrib()
 
