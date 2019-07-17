@@ -43,14 +43,14 @@ class VGVizModule(EaselModule):
         if self.showObjIdx == 0 or self.showObjIdx == 1:
             self.VGDS.drawVG(Alpha, ScaleX, ScaleY, ScaleZ)
 
-        if self.showObjIdx == 0 or self.showObjIdx == 2:
-            gl.glMatrixMode(gl.GL_MODELVIEW)
-            gl.glPushMatrix()
-            gl.glScale(ScaleX, ScaleY, ScaleZ)
-
-            self.VGDS.draw(pointSize=self.PointSize)
-
-            gl.glPopMatrix()
+        # if self.showObjIdx == 0 or self.showObjIdx == 2:
+        #     gl.glMatrixMode(gl.GL_MODELVIEW)
+        #     gl.glPushMatrix()
+        #     gl.glScale(ScaleX, ScaleY, ScaleZ)
+        #
+        #     self.VGDS.draw(pointSize=self.PointSize)
+        #
+        #     gl.glPopMatrix()
 
     def draw(self):
         gl.glMatrixMode(gl.GL_MODELVIEW)
