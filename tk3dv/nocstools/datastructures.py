@@ -124,8 +124,10 @@ class NOCSMap(PointSet3D):
         self.createNOCSFromNM(NOCSMap, RGB, Color)
 
     def createNOCSFromNM(self, NOCSMap, RGB=None, Color=None):
-        ValidIdx = np.where(np.all(NOCSMap != [255, 255, 255], axis=-1))
+        # ValidIdx = np.where(np.all(NOCSMap != [255, 255, 255], axis=-1)) # Only white BG
+        ValidIdx = np.where(np.all(np.bitwise_and(NOCSMap != [255, 255, 255], NOCSMap != [0, 0, 0]), axis=-1)) # White and black BG
         ValidPoints = NOCSMap[ValidIdx[0], ValidIdx[1]] / 255
+        print(len((ValidPoints)))
 
         # The PC can be colored with: (1) NOCS color, (2) RGB color, (3) Uniform color
         NOCSColors = ValidPoints
@@ -175,10 +177,12 @@ class VoxelGrid(PointSet3D):
         self.VBOIndices = glvbo.VBO(self.VGIndices, target=gl.GL_ELEMENT_ARRAY_BUFFER)
 
     def __del__(self):
+        super().__del__()
         if self.isVBOBound:
             self.VBOVGCorners.delete()
             self.VBOVGColors.delete()
-
+            self.VBOBorderColors.delete()
+            self.VBOIndices.delete()
 
     def createVG(self, Color=None):
         for i in range(0, len(self.VGNZ[0])):

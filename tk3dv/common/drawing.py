@@ -162,27 +162,6 @@ UNITCUBE_I=[
 #         4, 7, 6, 6, 5, 4,
 #         ]
 
-UNITCUBE_BUF=None
-def createUnitCubeVBO():
-    global UNITCUBE_BUF
-    UNITCUBE_BUF = gl.glGenBuffers(3)
-    gl.glBindBuffer(gl.GL_ARRAY_BUFFER, UNITCUBE_BUF[0])
-    gl.glBufferData(gl.GL_ARRAY_BUFFER,
-            len(UNITCUBE_V)*4,  # byte size
-            (ctypes.c_float*len(UNITCUBE_V))(*UNITCUBE_V),
-            gl.GL_STATIC_DRAW)
-    gl.glBindBuffer(gl.GL_ARRAY_BUFFER, UNITCUBE_BUF[1])
-    gl.glBufferData(gl.GL_ARRAY_BUFFER,
-            len(UNITCUBE_C)*4, # byte size
-            (ctypes.c_float*len(UNITCUBE_C))(*UNITCUBE_C),
-            gl.GL_STATIC_DRAW)
-    gl.glBindBuffer(gl.GL_ELEMENT_ARRAY_BUFFER, UNITCUBE_BUF[2])
-    gl.glBufferData(gl.GL_ELEMENT_ARRAY_BUFFER,
-            len(UNITCUBE_I)*4, # byte size
-            (ctypes.c_uint*len(UNITCUBE_I))(*UNITCUBE_I),
-            gl.GL_STATIC_DRAW)
-
-
 def drawUnitWireCube(lineWidth=1.0, isRainbow=False, WireColor=(1, 1, 1)):
     # Draws a cube of size 1 centered at 0.5, 0.5, 0.5
     gl.glPushAttrib(gl.GL_LINE_WIDTH)
@@ -190,7 +169,6 @@ def drawUnitWireCube(lineWidth=1.0, isRainbow=False, WireColor=(1, 1, 1)):
 
     gl.glColor3f(WireColor[0], WireColor[1], WireColor[2])
 
-    # METHOD 1: Slow
     for i in range(0, len(UNITCUBE_I), 3): # Each face
         gl.glBegin(gl.GL_LINE_STRIP)
         index=UNITCUBE_I[i]*3
@@ -208,22 +186,6 @@ def drawUnitWireCube(lineWidth=1.0, isRainbow=False, WireColor=(1, 1, 1)):
             gl.glColor3f(*UNITCUBE_C[index:index+3])
         gl.glVertex3f(*UNITCUBE_V[index:index+3])
         gl.glEnd()
-
-    # METHOD 2: VBOs
-    # if UNITCUBE_BUF is None:
-    #     createUnitCubeVBO()
-    #
-    # gl.glEnableClientState(gl.GL_VERTEX_ARRAY)
-    # gl.glEnableClientState(gl.GL_COLOR_ARRAY)
-    # gl.glBindBuffer(gl.GL_ARRAY_BUFFER, UNITCUBE_BUF[0])
-    # gl.glVertexPointer(3, gl.GL_FLOAT, 0, None)
-    # if isRainbow:
-    #     gl.glBindBuffer(gl.GL_ARRAY_BUFFER, UNITCUBE_BUF[1])
-    #     gl.glColorPointer(3, gl.GL_FLOAT, 0, None)
-    # gl.glBindBuffer(gl.GL_ELEMENT_ARRAY_BUFFER, UNITCUBE_BUF[2])
-    # gl.glDrawElements(gl.GL_LINE_STRIP, len(UNITCUBE_I), gl.GL_UNSIGNED_INT, None)
-    # gl.glDisableClientState(gl.GL_COLOR_ARRAY)
-    # gl.glDisableClientState(gl.GL_VERTEX_ARRAY)
 
     gl.glPopAttrib()
 
@@ -281,22 +243,6 @@ def drawUnitCube(isRainbow=False, Color=(1, 1, 1), Alpha=1.0):
             gl.glColor4f(0.0, i, 1.0, Alpha)
         gl.glVertex3f(0.0, i, 1.0)
     gl.glEnd()
-
-    # # METHOD 2: VBOs
-    # if UNITCUBE_BUF is None:
-    #     createUnitCubeVBO()
-    #
-    # gl.glEnableClientState(gl.GL_VERTEX_ARRAY)
-    # gl.glEnableClientState(gl.GL_COLOR_ARRAY)
-    # gl.glBindBuffer(gl.GL_ARRAY_BUFFER, UNITCUBE_BUF[0])
-    # gl.glVertexPointer(3, gl.GL_FLOAT, 0, None)
-    # if isRainbow:
-    #     gl.glBindBuffer(gl.GL_ARRAY_BUFFER, UNITCUBE_BUF[1])
-    #     gl.glColorPointer(3, gl.GL_FLOAT, 0, None)
-    # gl.glBindBuffer(gl.GL_ELEMENT_ARRAY_BUFFER, UNITCUBE_BUF[2])
-    # gl.glDrawElements(gl.GL_TRIANGLES, len(UNITCUBE_I), gl.GL_UNSIGNED_INT, None)
-    # gl.glDisableClientState(gl.GL_COLOR_ARRAY)
-    # gl.glDisableClientState(gl.GL_VERTEX_ARRAY)
 
     gl.glPopAttrib()
 
