@@ -19,8 +19,8 @@ class PointSet3D(PointSet):
         self.clear()
 
     def clear(self):
-        self.Points = np.zeros([0, 3])  # Each point is a row
-        self.Colors = np.zeros([0, 3])
+        self.Points = np.zeros([0, 3], dtype=np.float32)  # Each point is a row
+        self.Colors = np.zeros([0, 3], dtype=np.float32)
         self.isVBOBound = False
         self.BoundingBox = [np.zeros([3, 1]), np.zeros([3, 1])] # Bottom left and top right
         self.BBCenter = (self.BoundingBox[0] + self.BoundingBox[1]) / 2
@@ -53,11 +53,14 @@ class PointSet3D(PointSet):
 
         # Create VBO
         self.nPoints = len(self.Points)
-        self.VBOPoints = glvbo.VBO(self.Points)
-        self.VBOColors = glvbo.VBO(self.Colors)
+        self.createVBO()
         self.isVBOBound = True
 
         self.updateBoundingBox()
+
+    def createVBO(self):
+        self.VBOPoints = glvbo.VBO(self.Points)
+        self.VBOColors = glvbo.VBO(self.Colors)
 
     def addAll(self, Points, Colors=None):
         self.Points = Points.astype(np.float)
@@ -147,62 +150,37 @@ class VoxelGrid(PointSet3D):
         self.VGNZ = np.nonzero(self.VG.data)
         # We are treating VoxelGrid as a point cloud with unit cube sie limits
         # All 'on' voxels are a point in the point cloud. The center of a voxel is the position of the point
-        self.DefaultColor = (101 / 255, 67 / 255, 33 / 255)
-        self.VGCorners = np.zeros([0, 3], dtype=np.float)  # Each point is a row
-        self.VGColors = np.zeros([0, 3], dtype=np.float)  # Each point is a row
-        self.VGIndices = np.zeros([0,1], dtype=np.uint32)  # Each element is an index
+        self.DefaultColor = (101 / 255, 67 / 255, 33 / 255, 0.8)
+        self.DefaultBorderColor = (0, 0, 0, 1)
+        self.VGCorners = np.zeros([0, 3], dtype=np.float32)  # Each point is a row
+        self.VGColors = np.zeros([0, 4], dtype=np.float32)  # Each point is a row
+        self.VGBorderColors = np.zeros([0, 4], dtype=np.float32)  # Each point is a row
+        self.VGIndices = np.zeros([0, 1], dtype=np.int32)  # Each element is an index
         self.VGVBO = []
-        self.nVGCorners = 0
         self.isVBOBound = False
+        self.LineWidth = 2
 
         self.createVG()
 
     def update(self):
-        # super().update()
+        super().update()
         self.createVGVBO()
+        if self.isVBOBound == False:
+            self.isVBOBound = True
 
     def createVGVBO(self):
-        self.nVGCorners = int(len(self.VGCorners) / 3)
-        self.VBOPoints = glvbo.VBO(self.VGCorners)
-        self.VBOColors = glvbo.VBO(self.VGColors)
+        self.VBOVGCorners = glvbo.VBO(self.VGCorners)
+        self.VBOVGColors = glvbo.VBO(self.VGColors)
+        self.VBOBorderColors = glvbo.VBO(self.VGBorderColors)
         self.VBOIndices = glvbo.VBO(self.VGIndices, target=gl.GL_ELEMENT_ARRAY_BUFFER)
 
-        # self.VGVBO = gl.glGenBuffers(3)
-        # gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.VGVBO[0])
-        # gl.glBufferData(gl.GL_ARRAY_BUFFER,
-        #                 len(self.VGCorners) * 4,  # byte size
-        #                 (ctypes.c_float * len(self.VGCorners))(*self.VGCorners),
-        #                 gl.GL_STATIC_DRAW)
-        # gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.VGVBO[1])
-        # gl.glBufferData(gl.GL_ARRAY_BUFFER,
-        #                 len(self.VGColors) * 4,  # byte size
-        #                 (ctypes.c_float * len(self.VGColors))(*self.VGColors),
-        #                 gl.GL_STATIC_DRAW)
-        # gl.glBindBuffer(gl.GL_ELEMENT_ARRAY_BUFFER, self.VGVBO[2])
-        # gl.glBufferData(gl.GL_ELEMENT_ARRAY_BUFFER,
-        #                 len(self.VGIndices) * 4,  # byte size
-        #                 (ctypes.c_uint * len(self.VGIndices))(*self.VGIndices),
-        #                 gl.GL_STATIC_DRAW)
+    def __del__(self):
+        if self.isVBOBound:
+            self.VBOVGCorners.delete()
+            self.VBOVGColors.delete()
 
-        self.isVBOBound = True
 
     def createVG(self, Color=None):
-        # # TESTING
-        #
-        # self.VGCorners = np.vstack([self.VGCorners, np.asarray([0, 0, 0])])
-        # self.VGCorners = np.vstack([self.VGCorners, np.asarray([1, 0, 0])])
-        # self.VGCorners = np.vstack([self.VGCorners, np.asarray([1, 1, 0])])
-        # self.VGCorners = np.vstack([self.VGCorners, np.asarray([0, 0, 0])])
-        # self.VGCorners = np.vstack([self.VGCorners, np.asarray([0, 1, 0])])
-        # self.VGCorners = np.vstack([self.VGCorners, np.asarray([1, 1, 0])])
-        #
-        # self.VGIndices = np.vstack([self.VGIndices, np.asarray([0, 1, 2, 3, 4, 5]).reshape((-1, 1))])
-        #
-        # self.VGColors = self.VGCorners
-        #
-        # print(self.VGCorners)
-        # print(self.VGIndices)
-
         for i in range(0, len(self.VGNZ[0])):
             VoxelCenter = (np.array([self.VGNZ[0][i], self.VGNZ[1][i], self.VGNZ[2][i]]) + 0.5) / self.GridSize
             self.add(VoxelCenter[0], VoxelCenter[1], VoxelCenter[2], VoxelCenter[0], VoxelCenter[1], VoxelCenter[2])
@@ -236,74 +214,56 @@ class VoxelGrid(PointSet3D):
             if Color is None:
                 Color = self.DefaultColor
             for kk in range(0, 8):
-                self.VGColors = np.vstack([self.VGColors, np.asarray(Color).reshape((-1, 3))])
+                self.VGColors = np.vstack([self.VGColors, np.asarray(Color).reshape((-1, 4))])
+                self.VGBorderColors = np.vstack([self.VGBorderColors, np.asarray(self.DefaultBorderColor).reshape((-1, 4))])
 
-        # print(len(self.VGNZ[0]))
-        # print(self.VGCorners.shape)
-        # print(self.VGIndices.shape)
         self.update()
 
-    def drawVG(self, Alpha=0.8, ScaleX=1, ScaleY=1, ScaleZ=1):
+    def drawVG(self, Alpha=None, ScaleX=1, ScaleY=1, ScaleZ=1):
         if self.isVBOBound == False:
             print('[ WARN ]: Voxel grid VBOs not bound.')
 
-        gl.glPushAttrib(gl.GL_POINT_BIT)
-        gl.glPointSize(20)
+        if Alpha is not None:
+            # Change alpha channel in bound VBO
+            self.VGColors[:, -1] = Alpha
+
+        gl.glPushAttrib(gl.GL_POLYGON_BIT)
+        gl.glPushAttrib(gl.GL_COLOR_BUFFER_BIT)
+        gl.glPushAttrib(gl.GL_LINE_WIDTH)
+        gl.glLineWidth(self.LineWidth)
+
+        gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA)
+        gl.glEnable(gl.GL_BLEND)
 
         gl.glMatrixMode(gl.GL_MODELVIEW)
         gl.glPushMatrix()
         gl.glScale(ScaleX, ScaleY, ScaleZ)
 
-        if self.VBOPoints is not  None:
-            self.VBOPoints.bind()
-            gl.glEnableClientState(gl.GL_VERTEX_ARRAY)
-            gl.glVertexPointer(3, gl.GL_DOUBLE, 0, self.VBOPoints)
+        self.VBOVGCorners.bind()
+        gl.glEnableClientState(gl.GL_VERTEX_ARRAY)
+        gl.glVertexPointer(3, gl.GL_DOUBLE, 0, self.VBOVGCorners)
 
-        if self.VBOColors is not  None:
-            self.VBOColors.bind()
-            gl.glEnableClientState(gl.GL_COLOR_ARRAY)
-            gl.glColorPointer(3, gl.GL_DOUBLE, 0, self.VBOColors)
+        self.VBOIndices.bind()
 
-        if self.VBOIndices is not  None:
-            # gl.glDrawArrays(gl.GL_TRIANGLES, 0, self.nVGCorners)
-            self.VBOIndices.bind()
+        gl.glEnableClientState(gl.GL_COLOR_ARRAY)
+        self.VBOVGColors.bind()
+        gl.glColorPointer(4, gl.GL_DOUBLE, 0, self.VBOVGColors)
+        gl.glPolygonMode(gl.GL_FRONT_AND_BACK, gl.GL_FILL)
+        gl.glDrawElements(gl.GL_TRIANGLES, int(len(self.VGIndices)), gl.GL_UNSIGNED_INT, None)
+
+        self.VBOBorderColors.bind()
+        gl.glColorPointer(4, gl.GL_DOUBLE, 0, self.VBOBorderColors)
+        gl.glPolygonMode(gl.GL_FRONT_AND_BACK, gl.GL_LINE)
         gl.glDrawElements(gl.GL_TRIANGLES, int(len(self.VGIndices)), gl.GL_UNSIGNED_INT, None)
 
         gl.glDisableClientState(gl.GL_COLOR_ARRAY)
         gl.glDisableClientState(gl.GL_VERTEX_ARRAY)
 
-        gl.glPopAttrib()
-
-
-        # gl.glEnableClientState(gl.GL_VERTEX_ARRAY)
-        # gl.glEnableClientState(gl.GL_COLOR_ARRAY)
-        # gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.VGVBO[0])
-        # gl.glVertexPointer(3, gl.GL_FLOAT, 0, None)
-        # gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.VGVBO[1])
-        # gl.glColorPointer(3, gl.GL_FLOAT, 0, None)
-        # gl.glBindBuffer(gl.GL_ELEMENT_ARRAY_BUFFER, self.VGVBO[2])
-        # gl.glDrawElements(gl.GL_LINE_STRIP, len(self.VGIndices), gl.GL_UNSIGNED_INT, None)
-        # gl.glDisableClientState(gl.GL_COLOR_ARRAY)
-        # gl.glDisableClientState(gl.GL_VERTEX_ARRAY)
-        #
-        # GridSize = self.VG.dims[0]
-        #
-        # gl.glPushMatrix()
-        # gl.glScale(1 / GridSize, 1 / GridSize, 1 / GridSize)
-        #
-        # # TODO: Create a VoxelGrid class in nocstools and add VBO based drawing to it
-        # # Add VBO-based drawing for cubes, gorund plane, etc.
-        #
-        # for i in range(0, len(self.VGNZ[0])):
-        #     gl.glPushMatrix()
-        #     gl.glTranslate(self.VGNZ[0][i], self.VGNZ[1][i], self.VGNZ[2][i])
-        #     drawing.drawUnitWireCube(lineWidth=2.0, WireColor=(0, 0, 0))
-        #     drawing.drawUnitCube(Alpha=Alpha, Color=self.DefaultColor)
-        #     gl.glPopMatrix()
-        #
-        # gl.glPopMatrix()
-        #
         gl.glPopMatrix()
+
+        gl.glPopAttrib()
+        gl.glPopAttrib()
+        gl.glPopAttrib()
 
 
 class DepthImage(PointSet3D):
