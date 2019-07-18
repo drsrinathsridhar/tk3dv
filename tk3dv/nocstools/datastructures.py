@@ -162,19 +162,11 @@ class NOCSMap(PointSet3D):
         Width = self.Size[1]
         Height = self.Size[0]
 
-        # There are 2 (W-1)(H-1) triangles in a WxH image
-        # print(type(self.ValidIdx))
-        # print(type(self.ValidIdx[1]))
-        # print(self.ValidIdx[1].shape)
-        # return
-        # U = self.ValidIdx[1] / (Width - 1)
-        # V = self.ValidIdx[0] / (Height - 1)
-        # self.PixV = np.hstack([self.PixV, ])
-
         self.PixV = self.Points
         self.PixVC = np.hstack([self.Points, np.ones((self.Points.shape[0], 1))])
         self.ValidIdx1D = (self.ValidIdx[0] * Width + self.ValidIdx[1]).astype(np.int32) #1D index in image space
 
+        # TODO: This can be much faster
         for Idx in range(0, self.ValidIdx[1].shape[0]):
             i = self.ValidIdx[1][Idx]
             j = self.ValidIdx[0][Idx]
@@ -200,7 +192,7 @@ class NOCSMap(PointSet3D):
             RightTopIdx = RightTopIdx.item()
             RightBottomIdx = RightBottomIdx.item()
 
-                # Triangle 1
+            # Triangle 1
             Indices = [LeftBottomIdx, LeftTopIdx, RightTopIdx]
             self.PixTIdx = np.vstack([self.PixTIdx, np.asarray(Indices).reshape((-1, 1))])
 
