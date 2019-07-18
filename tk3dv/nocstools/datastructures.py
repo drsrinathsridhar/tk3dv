@@ -121,13 +121,26 @@ class PointSet3D(PointSet):
 class NOCSMap(PointSet3D):
     def __init__(self, NOCSMap, RGB=None, Color=None):
         super().__init__()
+        self.ValidIdx = None
+        self.NOCSMap = None
         self.createNOCSFromNM(NOCSMap, RGB, Color)
+        self.Size = NOCSMap.shape
+        self.LineWidth = 3
+
+        self.PixV = np.zeros([0, 3], dtype=np.float32)  # Each point is a row
+        self.PixVC = np.zeros([0, 4], dtype=np.float32)  # Each point is a row
+        self.PixTIdx = np.zeros([0, 1], dtype=np.int32)  # Each element is an index
+        self.isVBOBound = False
+
+        self.createConnectivity()
 
     def createNOCSFromNM(self, NOCSMap, RGB=None, Color=None):
-        # ValidIdx = np.where(np.all(NOCSMap != [255, 255, 255], axis=-1)) # Only white BG
-        ValidIdx = np.where(np.all(np.bitwise_and(NOCSMap != [255, 255, 255], NOCSMap != [0, 0, 0]), axis=-1)) # White and black BG
+        self.NOCSMap = NOCSMap
+        # TODO: FIXME BUG: Removes all pixels with any channel 255 or 0
+        ValidIdx = np.where(np.all(NOCSMap != [255, 255, 255], axis=-1)) # Only white BG
+        # ValidIdx = np.where(np.all(np.bitwise_and(NOCSMap != [255, 255, 255], NOCSMap != [0, 0, 0]), axis=-1)) # White and black BG
+        self.ValidIdx = ValidIdx
         ValidPoints = NOCSMap[ValidIdx[0], ValidIdx[1]] / 255
-        print(len((ValidPoints)))
 
         # The PC can be colored with: (1) NOCS color, (2) RGB color, (3) Uniform color
         NOCSColors = ValidPoints
@@ -141,8 +154,120 @@ class NOCSMap(PointSet3D):
 
         self.addAll(ValidPoints, Colors=RGBColors)
 
+    def createConnectivity(self):
+        if self.ValidIdx is None or self.NOCSMap is None:
+            print('[ WARN ]: Call createNOCSFromNM before trying to create connectivty.')
+            return
+
+        Width = self.Size[1]
+        Height = self.Size[0]
+
+        # There are 2 (W-1)(H-1) triangles in a WxH image
+        # print(type(self.ValidIdx))
+        # print(type(self.ValidIdx[1]))
+        # print(self.ValidIdx[1].shape)
+        # return
+        # U = self.ValidIdx[1] / (Width - 1)
+        # V = self.ValidIdx[0] / (Height - 1)
+        # self.PixV = np.hstack([self.PixV, ])
+
+        self.PixV = self.Points
+        self.PixVC = np.hstack([self.Points, np.ones((self.Points.shape[0], 1))])
+        self.ValidIdx1D = (self.ValidIdx[0] * Width + self.ValidIdx[1]).astype(np.int32) #1D index in image space
+
+        for Idx in range(0, self.ValidIdx[1].shape[0]):
+            i = self.ValidIdx[1][Idx]
+            j = self.ValidIdx[0][Idx]
+
+            if i == Width-1 or j == Height-1:
+                continue
+
+            LeftTop = np.int32(j*Width + i) # 1D index of pixel in image
+            LeftBottom = ((j + 1) * Width + i)
+            RightTop = LeftTop + 1
+            RightBottom = LeftBottom + 1
+
+            LeftTopIdx = np.array([np.where(self.ValidIdx1D == LeftTop)])
+            LeftBottomIdx = np.array([np.where(self.ValidIdx1D == LeftBottom)])
+            RightTopIdx = np.array([np.where(self.ValidIdx1D == RightTop)])
+            RightBottomIdx = np.array([np.where(self.ValidIdx1D == RightBottom)])
+
+            if (LeftTopIdx.size + LeftBottomIdx.size + RightTopIdx.size + RightBottomIdx.size) != 4:
+                continue
+
+            LeftTopIdx = LeftTopIdx.item()
+            LeftBottomIdx = LeftBottomIdx.item()
+            RightTopIdx = RightTopIdx.item()
+            RightBottomIdx = RightBottomIdx.item()
+
+                # Triangle 1
+            Indices = [LeftBottomIdx, LeftTopIdx, RightTopIdx]
+            self.PixTIdx = np.vstack([self.PixTIdx, np.asarray(Indices).reshape((-1, 1))])
+
+            # Triangle 2
+            Indices = [RightTopIdx, RightBottomIdx, LeftBottomIdx]
+            self.PixTIdx = np.vstack([self.PixTIdx, np.asarray(Indices).reshape((-1, 1))])
+
+        print('Number of vertices:', self.PixV.shape[0])
+        print('Number of triangles:', self.PixTIdx.shape[0] / 3)
+
+    def update(self):
+        super().update()
+        self.createConnectivityVBO()
+        if self.isVBOBound == False:
+            self.isVBOBound = True
+
+    def drawConn(self, Alpha=None, ScaleX=1, ScaleY=1, ScaleZ=1):
+        if self.isVBOBound == False:
+            print('[ WARN ]: Connectivity not created/bound.')
+
+        if Alpha is not None:
+            # Change alpha channel in bound VBO
+            self.PixVC[:, -1] = Alpha
+
+        gl.glPushAttrib(gl.GL_POLYGON_BIT)
+        gl.glPushAttrib(gl.GL_COLOR_BUFFER_BIT)
+        gl.glPushAttrib(gl.GL_LINE_WIDTH)
+        gl.glLineWidth(self.LineWidth)
+
+        gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA)
+        gl.glEnable(gl.GL_BLEND)
+
+        gl.glMatrixMode(gl.GL_MODELVIEW)
+        gl.glPushMatrix()
+        gl.glScale(ScaleX, ScaleY, ScaleZ)
+
+        self.VBOPixV.bind()
+        gl.glEnableClientState(gl.GL_VERTEX_ARRAY)
+        gl.glVertexPointer(3, gl.GL_DOUBLE, 0, self.VBOPixV)
+        self.VBOPixVC.bind()
+        gl.glEnableClientState(gl.GL_COLOR_ARRAY)
+        gl.glColorPointer(4, gl.GL_DOUBLE, 0, self.VBOPixVC)
+
+        self.VBOPixTIdx.bind()
+        gl.glPolygonMode(gl.GL_FRONT_AND_BACK, gl.GL_LINE)
+        gl.glDrawElements(gl.GL_TRIANGLES, int(len(self.VBOPixTIdx)), gl.GL_UNSIGNED_INT, None)
+
+        gl.glDisableClientState(gl.GL_COLOR_ARRAY)
+        gl.glDisableClientState(gl.GL_VERTEX_ARRAY)
+
+        gl.glPopMatrix()
+
+        gl.glPopAttrib()
+        gl.glPopAttrib()
+        gl.glPopAttrib()
+
+    def createConnectivityVBO(self):
+        self.VBOPixV = glvbo.VBO(self.PixV)
+        self.VBOPixVC = glvbo.VBO(self.PixVC)
+        self.VBOPixTIdx = glvbo.VBO(self.PixTIdx, target=gl.GL_ELEMENT_ARRAY_BUFFER)
+
     def __del__(self):
         super().__del__()
+        if self.isVBOBound:
+            self.VBOPixV.delete()
+            self.VBOPixVC.delete()
+            self.VBOPixTIdx.delete()
 
 class VoxelGrid(PointSet3D):
     def __init__(self, BinVoxGrid):

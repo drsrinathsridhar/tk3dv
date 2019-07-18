@@ -65,7 +65,7 @@ class NOCSMapModule(EaselModule):
         self.SSCtr = 0
         self.takeSS = False
         self.showNOCS = True
-        self.showBB = True
+        self.showBB = False
         self.loadData()
 
     def drawNOCS(self, lineWidth=2.0, ScaleX=1, ScaleY=1, ScaleZ=1, OffsetX=0, OffsetY=0, OffsetZ=0):
@@ -187,7 +187,7 @@ class NOCSMapModule(EaselModule):
             NOCSMap = cv2.imread(NMF, -1)
             NOCSMap = NOCSMap[:, :, :3] # Ignore alpha if present
             NOCSMap = cv2.cvtColor(NOCSMap, cv2.COLOR_BGR2RGB) # IMPORTANT: OpenCV loads as BGR, so convert to RGB
-            NOCSMap = self.resizeAndPad(NOCSMap)
+            # NOCSMap = self.resizeAndPad(NOCSMap)
             CFIm = None
             if CF is not None:
                 CFIm = cv2.imread(CF)
@@ -257,6 +257,7 @@ class NOCSMapModule(EaselModule):
                 if Idx != self.activeNMIdx:
                     continue
             NOCS.draw(self.PointSize)
+            NOCS.drawConn()
             if self.showBB:
                 NOCS.drawBB()
 
