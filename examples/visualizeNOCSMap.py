@@ -256,7 +256,7 @@ class NOCSMapModule(EaselModule):
             if self.activeNMIdx != self.nNM:
                 if Idx != self.activeNMIdx:
                     continue
-            NOCS.draw(self.PointSize)
+            # NOCS.draw(self.PointSize)
             NOCS.drawConn()
             if self.showBB:
                 NOCS.drawBB()

@@ -163,8 +163,50 @@ class NOCSMap(PointSet3D):
         Height = self.Size[0]
 
         self.PixV = self.Points
-        self.PixVC = np.hstack([self.Points, np.ones((self.Points.shape[0], 1))])
+        self.PixVC = np.hstack([self.Colors, np.ones((self.Points.shape[0], 1))])
         self.ValidIdx1D = (self.ValidIdx[0] * Width + self.ValidIdx[1]).astype(np.int32) #1D index in image space
+
+        # VECTORIZED
+        LeftTopM = self.ValidIdx1D
+        LeftBottomM = (self.ValidIdx[0] + 1) * Width + self.ValidIdx[1]
+        RightTopM = LeftTopM + 1
+        RightBottomM = LeftBottomM + 1
+
+        # print(LeftTopM)
+        # print(LeftBottomM)
+        # print(RightTopM)
+        # print(RightBottomM)
+
+        RemoveIdx = np.where(np.isin(LeftTopM, self.ValidIdx1D, invert=True))
+        RemoveIdx = np.append(RemoveIdx, np.where(np.isin(LeftBottomM, self.ValidIdx1D, invert=True)))
+        RemoveIdx = np.append(RemoveIdx, np.where(np.isin(RightTopM, self.ValidIdx1D, invert=True)))
+        RemoveIdx = np.append(RemoveIdx, np.where(np.isin(RightBottomM, self.ValidIdx1D, invert=True)))
+        RemoveIdx = np.unique(RemoveIdx)
+
+        LeftTopM = np.delete(LeftTopM, RemoveIdx)
+        LeftBottomM = np.delete(LeftBottomM, RemoveIdx)
+        RightTopM = np.delete(RightTopM, RemoveIdx)
+        RightBottomM = np.delete(RightBottomM, RemoveIdx)
+
+        # print(LeftTopM)
+        # print(LeftBottomM)
+        # print(RightTopM)
+        # print(RightBottomM)
+
+        Triangles1 = np.vstack([LeftBottomM, LeftTopM, RightTopM])
+        Triangles2 = np.vstack([RightTopM, RightBottomM, LeftBottomM])
+        TriangleSoup = np.hstack([Triangles1, Triangles2])
+
+        print(Triangles1)
+        print(Triangles2)
+        print(TriangleSoup)
+            
+        IndicesOfIdx = TriangleSoup.T.reshape((-1, 1))
+        self.PixTIdx = np.vstack([self.PixTIdx, np.where(self.ValidIdx1D == IndicesOfIdx)[1].reshape(-1, 1)])
+
+        print(self.PixTIdx)
+        print('Number of triangles (Vectorized):', int(self.PixTIdx.shape[0] / 3))
+        self.PixTIdx = np.zeros([0, 1], dtype=np.int32)  # Each element is an index
 
         # TODO: This can be much faster
         for Idx in range(0, self.ValidIdx[1].shape[0]):
@@ -200,8 +242,9 @@ class NOCSMap(PointSet3D):
             Indices = [RightTopIdx, RightBottomIdx, LeftBottomIdx]
             self.PixTIdx = np.vstack([self.PixTIdx, np.asarray(Indices).reshape((-1, 1))])
 
+        print(self.PixTIdx)
         print('Number of vertices:', self.PixV.shape[0])
-        print('Number of triangles:', self.PixTIdx.shape[0] / 3)
+        print('Number of triangles:', int(self.PixTIdx.shape[0] / 3))
 
     def update(self):
         super().update()
@@ -237,7 +280,7 @@ class NOCSMap(PointSet3D):
         gl.glColorPointer(4, gl.GL_DOUBLE, 0, self.VBOPixVC)
 
         self.VBOPixTIdx.bind()
-        gl.glPolygonMode(gl.GL_FRONT_AND_BACK, gl.GL_LINE)
+        # gl.glPolygonMode(gl.GL_FRONT_AND_BACK, gl.GL_LINE)
         gl.glDrawElements(gl.GL_TRIANGLES, int(len(self.VBOPixTIdx)), gl.GL_UNSIGNED_INT, None)
 
         gl.glDisableClientState(gl.GL_COLOR_ARRAY)
