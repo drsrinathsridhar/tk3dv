@@ -133,6 +133,7 @@ class NOCSMap(PointSet3D):
         self.isVBOBound = False
 
         self.createConnectivity()
+        self.update()
 
     def createNOCSFromNM(self, NOCSMap, RGB=None, Color=None):
         self.NOCSMap = NOCSMap
@@ -167,90 +168,94 @@ class NOCSMap(PointSet3D):
         self.ValidIdx1D = (self.ValidIdx[0] * Width + self.ValidIdx[1]).astype(np.int32) #1D index in image space
 
         # VECTORIZED
-        LeftTopM = self.ValidIdx1D
-        LeftBottomM = (self.ValidIdx[0] + 1) * Width + self.ValidIdx[1]
-        RightTopM = LeftTopM + 1
-        RightBottomM = LeftBottomM + 1
+        LeftTop = self.ValidIdx1D
+        LeftBottom = (self.ValidIdx[0] + 1) * Width + self.ValidIdx[1]
+        RightTop = LeftTop + 1
+        RightBottom = LeftBottom + 1
 
-        # print(LeftTopM)
-        # print(LeftBottomM)
-        # print(RightTopM)
-        # print(RightBottomM)
+        # RemoveIdx = np.where(np.isin(LeftTop, self.ValidIdx1D, invert=True))
+        RemoveIdx = np.zeros([0, 1], dtype=np.int32)
+        RemoveIdx = np.vstack([RemoveIdx, np.where(np.isin(LeftBottom, self.ValidIdx1D, invert=True))[0].reshape(-1, 1)])
+        RemoveIdx = np.vstack([RemoveIdx, np.where(np.isin(RightTop, self.ValidIdx1D, invert=True))[0].reshape(-1, 1)])
+        RemoveIdx = np.vstack([RemoveIdx, np.where(np.isin(RightBottom, self.ValidIdx1D, invert=True))[0].reshape(-1, 1)])
+        RemoveIdx = np.unique(RemoveIdx.squeeze()).astype(np.int32)
 
-        RemoveIdx = np.where(np.isin(LeftTopM, self.ValidIdx1D, invert=True))
-        RemoveIdx = np.append(RemoveIdx, np.where(np.isin(LeftBottomM, self.ValidIdx1D, invert=True)))
-        RemoveIdx = np.append(RemoveIdx, np.where(np.isin(RightTopM, self.ValidIdx1D, invert=True)))
-        RemoveIdx = np.append(RemoveIdx, np.where(np.isin(RightBottomM, self.ValidIdx1D, invert=True)))
-        RemoveIdx = np.unique(RemoveIdx)
+        LeftTop = np.delete(LeftTop, RemoveIdx)
+        LeftBottom = np.delete(LeftBottom, RemoveIdx)
+        RightTop = np.delete(RightTop, RemoveIdx)
+        RightBottom = np.delete(RightBottom, RemoveIdx)
 
-        LeftTopM = np.delete(LeftTopM, RemoveIdx)
-        LeftBottomM = np.delete(LeftBottomM, RemoveIdx)
-        RightTopM = np.delete(RightTopM, RemoveIdx)
-        RightBottomM = np.delete(RightBottomM, RemoveIdx)
+        # METHOD 1
+        # LeftTopMaskIdx = np.nonzero(LeftTop[:, None] == self.ValidIdx1D)[1].reshape(-1, 1).squeeze()
+        # LeftBottomMaskIdx = np.nonzero(LeftBottom[:, None] == self.ValidIdx1D)[1].reshape(-1, 1).squeeze()
+        # RightTopMaskIdx = np.nonzero(RightTop[:, None] == self.ValidIdx1D)[1].reshape(-1, 1).squeeze()
+        # RightBottomMaskIdx = np.nonzero(RightBottom[:, None] == self.ValidIdx1D)[1].reshape(-1, 1).squeeze()
 
-        # print(LeftTopM)
-        # print(LeftBottomM)
-        # print(RightTopM)
-        # print(RightBottomM)
+        # METHOD 2 - Fastest!! https://stackoverflow.com/questions/33678543/finding-indices-of-matches-of-one-array-in-another-array
+        sort_idx = self.ValidIdx1D.argsort()
+        LeftTopMaskIdx = sort_idx[np.searchsorted(self.ValidIdx1D, LeftTop, sorter=sort_idx)]
+        LeftBottomMaskIdx = sort_idx[np.searchsorted(self.ValidIdx1D, LeftBottom, sorter=sort_idx)]
+        RightTopMaskIdx = sort_idx[np.searchsorted(self.ValidIdx1D, RightTop, sorter=sort_idx)]
+        RightBottomMaskIdx = sort_idx[np.searchsorted(self.ValidIdx1D, RightBottom, sorter=sort_idx)]
 
-        Triangles1 = np.vstack([LeftBottomM, LeftTopM, RightTopM])
-        Triangles2 = np.vstack([RightTopM, RightBottomM, LeftBottomM])
-        TriangleSoup = np.hstack([Triangles1, Triangles2])
+        Triangles1 = np.vstack([LeftBottomMaskIdx, LeftTopMaskIdx, RightTopMaskIdx])
+        Triangles2 = np.vstack([RightTopMaskIdx, RightBottomMaskIdx, LeftBottomMaskIdx])
+        TriangleSoup = np.vstack([Triangles1, Triangles2])
 
-        print(Triangles1)
-        print(Triangles2)
-        print(TriangleSoup)
-            
-        IndicesOfIdx = TriangleSoup.T.reshape((-1, 1))
-        self.PixTIdx = np.vstack([self.PixTIdx, np.where(self.ValidIdx1D == IndicesOfIdx)[1].reshape(-1, 1)])
+        self.PixTIdx = TriangleSoup.T.reshape((-1, 1)).astype(np.int32)
 
-        print(self.PixTIdx)
-        print('Number of triangles (Vectorized):', int(self.PixTIdx.shape[0] / 3))
-        self.PixTIdx = np.zeros([0, 1], dtype=np.int32)  # Each element is an index
+        # # SLOW FOR LOOP
+        # Tic = utilities.getCurrentEpochTime()
+        # for Idx in range(0, self.ValidIdx[1].shape[0]):
+        #     i = self.ValidIdx[1][Idx]
+        #     j = self.ValidIdx[0][Idx]
+        #
+        #     if i == Width-1 or j == Height-1:
+        #         continue
+        #
+        #     LeftTop = np.int32(j*Width + i) # 1D index of pixel in image
+        #     LeftBottom = ((j + 1) * Width + i)
+        #     RightTop = LeftTop + 1
+        #     RightBottom = LeftBottom + 1
+        #
+        #     LeftTopIdx = np.array([np.where(self.ValidIdx1D == LeftTop)])
+        #     LeftBottomIdx = np.array([np.where(self.ValidIdx1D == LeftBottom)])
+        #     RightTopIdx = np.array([np.where(self.ValidIdx1D == RightTop)])
+        #     RightBottomIdx = np.array([np.where(self.ValidIdx1D == RightBottom)])
+        #
+        #     if (LeftTopIdx.size + LeftBottomIdx.size + RightTopIdx.size + RightBottomIdx.size) != 4:
+        #         continue
+        #
+        #     LeftTopIdx = LeftTopIdx.item()
+        #     LeftBottomIdx = LeftBottomIdx.item()
+        #     RightTopIdx = RightTopIdx.item()
+        #     RightBottomIdx = RightBottomIdx.item()
+        #
+        #     # Triangle 1
+        #     Indices = [LeftBottomIdx, LeftTopIdx, RightTopIdx]
+        #     self.PixTIdx = np.vstack([self.PixTIdx, np.asarray(Indices).reshape((-1, 1))])
+        #
+        #     # Triangle 2
+        #     Indices = [RightTopIdx, RightBottomIdx, LeftBottomIdx]
+        #     self.PixTIdx = np.vstack([self.PixTIdx, np.asarray(Indices).reshape((-1, 1))])
+        #
+        # Toc = utilities.getCurrentEpochTime()
+        # print('For loop total time', (Toc-Tic) * 1e-3, 'ms.')
+        # sys.stdout.flush()
 
-        # TODO: This can be much faster
-        for Idx in range(0, self.ValidIdx[1].shape[0]):
-            i = self.ValidIdx[1][Idx]
-            j = self.ValidIdx[0][Idx]
-
-            if i == Width-1 or j == Height-1:
-                continue
-
-            LeftTop = np.int32(j*Width + i) # 1D index of pixel in image
-            LeftBottom = ((j + 1) * Width + i)
-            RightTop = LeftTop + 1
-            RightBottom = LeftBottom + 1
-
-            LeftTopIdx = np.array([np.where(self.ValidIdx1D == LeftTop)])
-            LeftBottomIdx = np.array([np.where(self.ValidIdx1D == LeftBottom)])
-            RightTopIdx = np.array([np.where(self.ValidIdx1D == RightTop)])
-            RightBottomIdx = np.array([np.where(self.ValidIdx1D == RightBottom)])
-
-            if (LeftTopIdx.size + LeftBottomIdx.size + RightTopIdx.size + RightBottomIdx.size) != 4:
-                continue
-
-            LeftTopIdx = LeftTopIdx.item()
-            LeftBottomIdx = LeftBottomIdx.item()
-            RightTopIdx = RightTopIdx.item()
-            RightBottomIdx = RightBottomIdx.item()
-
-            # Triangle 1
-            Indices = [LeftBottomIdx, LeftTopIdx, RightTopIdx]
-            self.PixTIdx = np.vstack([self.PixTIdx, np.asarray(Indices).reshape((-1, 1))])
-
-            # Triangle 2
-            Indices = [RightTopIdx, RightBottomIdx, LeftBottomIdx]
-            self.PixTIdx = np.vstack([self.PixTIdx, np.asarray(Indices).reshape((-1, 1))])
-
-        print(self.PixTIdx)
-        print('Number of vertices:', self.PixV.shape[0])
-        print('Number of triangles:', int(self.PixTIdx.shape[0] / 3))
+        # print(self.PixTIdx)
+        # print('Number of triangles:', int(self.PixTIdx.shape[0] / 3))
 
     def update(self):
         super().update()
         self.createConnectivityVBO()
         if self.isVBOBound == False:
             self.isVBOBound = True
+
+    def createConnectivityVBO(self):
+        self.VBOPixV = glvbo.VBO(self.PixV)
+        self.VBOPixVC = glvbo.VBO(self.PixVC)
+        self.VBOPixTIdx = glvbo.VBO(self.PixTIdx, target=gl.GL_ELEMENT_ARRAY_BUFFER)
 
     def drawConn(self, Alpha=None, ScaleX=1, ScaleY=1, ScaleZ=1):
         if self.isVBOBound == False:
@@ -291,11 +296,6 @@ class NOCSMap(PointSet3D):
         gl.glPopAttrib()
         gl.glPopAttrib()
         gl.glPopAttrib()
-
-    def createConnectivityVBO(self):
-        self.VBOPixV = glvbo.VBO(self.PixV)
-        self.VBOPixVC = glvbo.VBO(self.PixVC)
-        self.VBOPixTIdx = glvbo.VBO(self.PixTIdx, target=gl.GL_ELEMENT_ARRAY_BUFFER)
 
     def __del__(self):
         super().__del__()

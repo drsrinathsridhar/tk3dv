@@ -194,7 +194,6 @@ class NOCSMapModule(EaselModule):
                 CFIm = cv2.cvtColor(CFIm, cv2.COLOR_BGR2RGB) # IMPORTANT: OpenCV loads as BGR, so convert to RGB
                 CFIm = cv2.resize(CFIm, self.ImageSize, interpolation=cv2.INTER_NEAREST)
             NOCS = ds.NOCSMap(NOCSMap, RGB=CFIm)
-            NOCS.update()
             self.NOCSMaps.append(NOCSMap)
             self.NOCS.append(NOCS)
 
