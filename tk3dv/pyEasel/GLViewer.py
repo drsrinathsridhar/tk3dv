@@ -19,7 +19,7 @@ class GLViewer(QOpenGLWidget):
         super(GLViewer, self).__init__(parent)
 
         self.setWindowTitle('pyEasel')
-        Fact = 4.0;
+        Fact = 4.0
         self.setGeometry(30, 30, 320 * Fact, 240 * Fact + 50)
 
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
@@ -34,6 +34,7 @@ class GLViewer(QOpenGLWidget):
         self.isUpdateEveryStep = False
         self.RotateSpeed = 0.05
         self.RotateSpeedUpdate = 0.02
+        self.isDarkMode = False
 
         self.SceneExtents = 1000000.0
         self.SceneHeight = self.SceneExtents / 1000.0
@@ -55,11 +56,17 @@ class GLViewer(QOpenGLWidget):
 
         self.Translation = np.array([0.0, 0.0, 0.0])
 
+    def clearColor(self):
+        if self.isDarkMode:
+            gl.glClearColor(0.1, 0.1, 0.1, 1.0)
+        else:
+            # gl.glClearColor(0.58, 0.58, 0.58, 1.0)
+            # gl.glClearColor(0.9, 0.9, 0.9, 1.0)
+            # gl.glClearColor(1, 1, 1, 1)
+            gl.glClearColor(0.98, 0.98, 0.98, 1.0)
+
     def initializeGL(self):
-        # gl.glClearColor(0.58, 0.58, 0.58, 1.0)
-        # gl.glClearColor(0.9, 0.9, 0.9, 1.0)
-        # gl.glClearColor(1, 1, 1, 1)
-        gl.glClearColor(0.98, 0.98, 0.98, 1.0)
+        self.clearColor()
 
     def resizeGL(self, w: int, h: int):
         gl.glViewport(0, 0, w, h)
@@ -137,6 +144,7 @@ class GLViewer(QOpenGLWidget):
         pass
 
     def drawGL(self):
+        self.clearColor()
         # uint64_t Tic = Common::getCurrentEpochTime();
         self.updateState()
 
@@ -183,6 +191,14 @@ class GLViewer(QOpenGLWidget):
                 self.update()
             if (a0.key() == QtCore.Qt.Key_X):
                 self.isRenderAxis = not self.isRenderAxis
+                self.update()
+            if (a0.key() == QtCore.Qt.Key_D):
+                self.isDarkMode = not self.isDarkMode
+                if self.isDarkMode:
+                    print('[ INFO ]: Enabling dark mode.')
+                else:
+                    print('[ INFO ]: Disabling dark mode.')
+                self.clearColor()
                 self.update()
             if (a0.key() == QtCore.Qt.Key_R):
                 self.isRotateCamera = not self.isRotateCamera
