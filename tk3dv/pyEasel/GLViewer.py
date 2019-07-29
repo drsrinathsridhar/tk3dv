@@ -30,6 +30,10 @@ class GLViewer(QOpenGLWidget):
         # self.setMinimumSize(640, 480)
         self.isRenderPlane = True
         self.isRenderAxis = True
+        self.isRotateCamera = False
+        self.isUpdateEveryStep = False
+        self.RotateSpeed = 0.05
+        self.RotateSpeedUpdate = 0.02
 
         self.SceneExtents = 1000000.0
         self.SceneHeight = self.SceneExtents / 1000.0
@@ -173,13 +177,23 @@ class GLViewer(QOpenGLWidget):
         gl.glDisable(gl.GL_DEPTH_TEST)
 
     def keyPressEvent(self, a0: QKeyEvent):
-        if(a0.modifiers() == QtCore.Qt.ControlModifier):
+        if(a0.modifiers() == (QtCore.Qt.ControlModifier)):
             if(a0.key() == QtCore.Qt.Key_P):
                 self.isRenderPlane = not self.isRenderPlane
                 self.update()
             if (a0.key() == QtCore.Qt.Key_X):
                 self.isRenderAxis = not self.isRenderAxis
                 self.update()
+            if (a0.key() == QtCore.Qt.Key_R):
+                self.isRotateCamera = not self.isRotateCamera
+                self.isUpdateEveryStep = self.isRotateCamera
+                self.update()
+            if (a0.key() == QtCore.Qt.Key_Period):
+                if self.RotateSpeed < (1.0 - self.RotateSpeedUpdate):
+                    self.RotateSpeed += self.RotateSpeedUpdate
+            if (a0.key() == QtCore.Qt.Key_Comma):
+                if self.RotateSpeed > self.RotateSpeedUpdate:
+                    self.RotateSpeed -= self.RotateSpeedUpdate
 
         if(a0.key() == QtCore.Qt.Key_Escape):
             QtCore.QCoreApplication.quit()

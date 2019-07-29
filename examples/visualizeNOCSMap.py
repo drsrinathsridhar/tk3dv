@@ -66,6 +66,7 @@ class NOCSMapModule(EaselModule):
         self.takeSS = False
         self.showNOCS = True
         self.showBB = False
+        self.showPoints = False
         self.loadData()
 
     def drawNOCS(self, lineWidth=2.0, ScaleX=1, ScaleY=1, ScaleZ=1, OffsetX=0, OffsetY=0, OffsetZ=0):
@@ -187,7 +188,7 @@ class NOCSMapModule(EaselModule):
             NOCSMap = cv2.imread(NMF, -1)
             NOCSMap = NOCSMap[:, :, :3] # Ignore alpha if present
             NOCSMap = cv2.cvtColor(NOCSMap, cv2.COLOR_BGR2RGB) # IMPORTANT: OpenCV loads as BGR, so convert to RGB
-            # NOCSMap = self.resizeAndPad(NOCSMap)
+            NOCSMap = self.resizeAndPad(NOCSMap)
             CFIm = None
             if CF is not None:
                 CFIm = cv2.imread(CF)
@@ -255,8 +256,11 @@ class NOCSMapModule(EaselModule):
             if self.activeNMIdx != self.nNM:
                 if Idx != self.activeNMIdx:
                     continue
-            # NOCS.draw(self.PointSize)
-            NOCS.drawConn()
+
+            if self.showPoints:
+                NOCS.draw(self.PointSize)
+            else:
+                NOCS.drawConn()
             if self.showBB:
                 NOCS.drawBB()
 
@@ -298,6 +302,9 @@ class NOCSMapModule(EaselModule):
 
 
     def keyPressEvent(self, a0: QKeyEvent):
+        if a0.modifiers() != QtCore.Qt.NoModifier:
+            return
+
         if a0.key() == QtCore.Qt.Key_Plus:  # Increase or decrease point size
             if self.PointSize < 20:
                 self.PointSize = self.PointSize + 1
@@ -314,6 +321,8 @@ class NOCSMapModule(EaselModule):
             self.showNOCS = not self.showNOCS
         if a0.key() == QtCore.Qt.Key_B:
             self.showBB = not self.showBB
+        if a0.key() == QtCore.Qt.Key_P:
+            self.showPoints = not self.showPoints
 
         if a0.key() == QtCore.Qt.Key_S:
             print('[ INFO ]: Taking snapshot.')

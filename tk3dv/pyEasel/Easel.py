@@ -6,7 +6,7 @@ import PyQt5.QtCore as QtCore
 from PyQt5.QtGui import QKeyEvent, QMouseEvent, QWheelEvent
 
 from tk3dv.common import utilities
-
+import math
 
 # Some code to manage the module
 class Easel(glv.GLViewer):
@@ -59,7 +59,10 @@ class Easel(glv.GLViewer):
 
         self.FPS = 1e6 / (ElapsedTime)
 
-        # self.update() # A bit hacky to force draw call after step
+        if self.isRotateCamera:
+            self.Yaw += math.radians(self.RotateSpeed)
+        if self.isUpdateEveryStep:
+            self.update() # A bit hacky to force draw call after step
 
     def stop(self):
         self.Mutex.acquire()

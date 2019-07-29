@@ -6,10 +6,10 @@
 
 ## pyEasel
 - [ ] Dark mode for plane and background
-- [ ] Unified key combination for global shortcuts
+- [x] Unified key combination for global shortcuts
 - [ ] Camera rotation shortcut
 - [ ] Save and load fixed camera poses
 - [ ] Automatic display of shortcuts in help dialog
 
 ## Examples
-- [ ] visualizeNOCSMap.py: Keyboard shortcut to toggle mesh and PC rendering
+- [x] visualizeNOCSMap.py: Keyboard shortcut to toggle mesh and PC rendering
