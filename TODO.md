@@ -10,3 +10,6 @@
 - [ ] Camera rotation shortcut
 - [ ] Save and load fixed camera poses
 - [ ] Automatic display of shortcuts in help dialog
+
+## Examples
+- [ ] visualizeNOCSMap.py: Keyboard shortcut to toggle mesh and PC rendering
