@@ -1,6 +1,6 @@
 import OpenGL.GL as gl
+import OpenGL.arrays.vbo as glvbo
 import numpy as np
-import ctypes
 
 def drawAxes(Length=100.0, LineWidth=5.0, Color=None):
     gl.glMatrixMode(gl.GL_MODELVIEW)
@@ -209,10 +209,105 @@ def drawUnitCube(isRainbow=False, Color=(1, 1, 1), Alpha=1.0):
 
     gl.glPopAttrib()
 
-def drawCheckerBoardVBO(floorSize, squareWidthInPixel, squareHeightInPixel, SceneHeight):
-    pass
 
-def drawCheckerBoard(floorSize, squareWidthInPixel, squareHeightInPixel, SceneHeight):
+def getVBOs(V, VC, I):
+    VBO_V = glvbo.VBO(V)
+    VBO_VC = glvbo.VBO(VC)
+    VBO_I = glvbo.VBO(I, target=gl.GL_ELEMENT_ARRAY_BUFFER)
+
+    return VBO_V, VBO_VC, VBO_I
+
+
+CB_V = np.zeros([0, 3], dtype=np.float32)  # Each point is a row
+CB_VC = np.zeros([0, 4], dtype=np.float32)  # Each point is a row
+CB_I = np.zeros([0, 1], dtype=np.int32)  # Each element is an index
+CB_V_VBO = None
+CB_VC_VBO = None
+CB_I_VBO = None
+CBFloorSize = 10000
+CBSquareWidth = 1000
+CBSquareHeight = 1000
+CBSceneHeight = 1000
+CBVBOBound = False
+CB_isWire = False
+CB_WireColor = np.array([0.1, 0.1, 0.1, 1.0])
+
+def createCBData(floorSize, squareWidthInPixel, squareHeightInPixel, SceneHeight):
+    global CBVBOBound, CB_V, CB_VC, CB_I, CB_V_VBO, CB_VC_VBO, CB_I_VBO, CB_isWire, CB_WireColor
+    CBVBOBound = False
+    colorBlack = np.array([0.8, 0.8, 0.8, 1.0])
+    colorWhite = np.array([0.1, 0.1, 0.1, 1.0])
+    isWhite = False
+    Idx = 0
+    CB_V = np.zeros([0, 3], dtype=np.float32)  # Each point is a row
+    CB_VC = np.zeros([0, 4], dtype=np.float32)  # Each point is a row
+    CB_I = np.zeros([0, 1], dtype=np.int32)  # Each element is an index
+
+    for x in range(-floorSize, floorSize + 1, squareHeightInPixel):
+        for y in range(-floorSize, floorSize + 1, squareWidthInPixel):
+            CB_V = np.vstack([CB_V, np.array([x, -SceneHeight, y + squareHeightInPixel])])
+            CB_V = np.vstack([CB_V, np.array([x + squareHeightInPixel, -SceneHeight, y + squareHeightInPixel])])
+            CB_V = np.vstack([CB_V, np.array([x + squareHeightInPixel, -SceneHeight, y])])
+            CB_V = np.vstack([CB_V, np.array([x, -SceneHeight, y])])
+
+            CB_I = np.vstack([CB_I, np.array([Idx, Idx + 1, Idx + 2]).reshape(-1, 1)])
+            CB_I = np.vstack([CB_I, np.array([Idx + 2, Idx + 3, Idx]).reshape(-1, 1)])
+            Idx = Idx + 4
+
+            for kk in range(0, 4):
+                if CB_isWire:
+                    CB_VC = np.vstack([CB_VC, CB_WireColor])
+                else:
+                    if (isWhite == True):
+                        CB_VC = np.vstack([CB_VC, colorWhite])
+                    else:
+                        CB_VC = np.vstack([CB_VC, colorBlack])
+            isWhite = not isWhite
+
+    CB_V_VBO, CB_VC_VBO, CB_I_VBO = getVBOs(CB_V, CB_VC, CB_I)
+
+def drawCheckerBoard(floorSize, squareWidthInPixel, squareHeightInPixel, SceneHeight, isWireFrame=False, LineWidth=3.0, wireColor=np.array([0, 0, 0, 1])):
+    global CB_V, CB_VC, CB_I, CBFloorSize, CBSquareWidth, CBSquareHeight, CBVBOBound, CB_V_VBO, CB_VC_VBO, CB_I_VBO, CB_isWire, CB_WireColor
+    if floorSize != CBFloorSize or squareHeightInPixel != CBSquareWidth or squareHeightInPixel != CBSquareHeight \
+            or CBSceneHeight != SceneHeight or CB_V_VBO is None or CB_isWire != isWireFrame or np.linalg.norm(CB_WireColor - wireColor) > 0.01:
+        CB_WireColor = wireColor
+        CB_isWire = isWireFrame
+        createCBData(floorSize, squareWidthInPixel, squareHeightInPixel, SceneHeight)
+
+    if CBVBOBound == False:
+        CB_V_VBO.bind()
+        CB_VC_VBO.bind()
+        CB_I_VBO.bind()
+        CBVBOBound = True
+
+    gl.glPushAttrib(gl.GL_POLYGON_BIT)
+    gl.glPushAttrib(gl.GL_COLOR_BUFFER_BIT)
+    gl.glPushAttrib(gl.GL_LINE_WIDTH)
+    gl.glLineWidth(LineWidth)
+
+    gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA)
+    gl.glEnable(gl.GL_BLEND)
+
+    CB_V_VBO.bind()
+    gl.glEnableClientState(gl.GL_VERTEX_ARRAY)
+    gl.glVertexPointer(3, gl.GL_DOUBLE, 0, CB_V_VBO)
+    CB_VC_VBO.bind()
+    gl.glEnableClientState(gl.GL_COLOR_ARRAY)
+    gl.glColorPointer(4, gl.GL_DOUBLE, 0, CB_VC_VBO)
+
+    CB_I_VBO.bind()
+    if isWireFrame:
+        gl.glPolygonMode(gl.GL_FRONT_AND_BACK, gl.GL_LINE)
+    gl.glDrawElements(gl.GL_TRIANGLES, int(len(CB_I_VBO)), gl.GL_UNSIGNED_INT, None)
+
+    gl.glDisableClientState(gl.GL_COLOR_ARRAY)
+    gl.glDisableClientState(gl.GL_VERTEX_ARRAY)
+
+    gl.glPopAttrib()
+    gl.glPopAttrib()
+    gl.glPopAttrib()
+
+def drawCheckerBoardOld(floorSize, squareWidthInPixel, squareHeightInPixel, SceneHeight):
     mat_specular = np.array([1.0, 1.0, 1.0, 1.0])
     mat_shininess = np.array([128])
     light_position = np.array([0.0, 3.0, 0.0, 0.0])

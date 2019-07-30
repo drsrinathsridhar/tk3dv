@@ -29,6 +29,7 @@ class GLViewer(QOpenGLWidget):
         self.Height = self.height()
         # self.setMinimumSize(640, 480)
         self.isRenderPlane = True
+        self.isRenderPlaneWire = False
         self.isRenderAxis = True
         self.isRotateCamera = False
         self.isUpdateEveryStep = False
@@ -155,7 +156,8 @@ class GLViewer(QOpenGLWidget):
         gl.glShadeModel(gl.GL_SMOOTH)
 
         if self.isRenderPlane:
-            drawing.drawCheckerBoard(10000, 1000, 1000, self.SceneHeight)
+            wireColor = np.array([0.9, 0.9, 0.9, 1.0]) if self.isDarkMode else np.array([0.1, 0.1, 0.1, 1.0])
+            drawing.drawCheckerBoard(10000, 1000, 1000, self.SceneHeight, isWireFrame=self.isRenderPlaneWire, wireColor=wireColor)
         if self.isRenderAxis:
             drawing.drawAxes()
 
@@ -188,6 +190,9 @@ class GLViewer(QOpenGLWidget):
         if(a0.modifiers() == (QtCore.Qt.ControlModifier)):
             if(a0.key() == QtCore.Qt.Key_P):
                 self.isRenderPlane = not self.isRenderPlane
+                self.update()
+            if(a0.key() == QtCore.Qt.Key_W):
+                self.isRenderPlaneWire = not self.isRenderPlaneWire
                 self.update()
             if (a0.key() == QtCore.Qt.Key_X):
                 self.isRenderAxis = not self.isRenderAxis
