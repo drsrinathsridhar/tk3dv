@@ -67,6 +67,7 @@ class NOCSMapModule(EaselModule):
         self.showNOCS = True
         self.showBB = False
         self.showPoints = False
+        self.showWireFrame = False
         self.loadData()
 
     def drawNOCS(self, lineWidth=2.0, ScaleX=1, ScaleY=1, ScaleZ=1, OffsetX=0, OffsetY=0, OffsetZ=0):
@@ -260,7 +261,7 @@ class NOCSMapModule(EaselModule):
             if self.showPoints:
                 NOCS.draw(self.PointSize)
             else:
-                NOCS.drawConn()
+                NOCS.drawConn(isWireFrame=self.showWireFrame)
             if self.showBB:
                 NOCS.drawBB()
 
@@ -323,6 +324,8 @@ class NOCSMapModule(EaselModule):
             self.showBB = not self.showBB
         if a0.key() == QtCore.Qt.Key_P:
             self.showPoints = not self.showPoints
+        if a0.key() == QtCore.Qt.Key_W:
+            self.showWireFrame = not self.showWireFrame
 
         if a0.key() == QtCore.Qt.Key_S:
             print('[ INFO ]: Taking snapshot.')

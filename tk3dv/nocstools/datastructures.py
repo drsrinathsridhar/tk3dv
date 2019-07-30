@@ -257,7 +257,7 @@ class NOCSMap(PointSet3D):
         self.VBOPixVC = glvbo.VBO(self.PixVC)
         self.VBOPixTIdx = glvbo.VBO(self.PixTIdx, target=gl.GL_ELEMENT_ARRAY_BUFFER)
 
-    def drawConn(self, Alpha=None, ScaleX=1, ScaleY=1, ScaleZ=1):
+    def drawConn(self, Alpha=None, ScaleX=1, ScaleY=1, ScaleZ=1, isWireFrame=False):
         if self.isVBOBound == False:
             print('[ WARN ]: Connectivity not created/bound.')
 
@@ -285,7 +285,8 @@ class NOCSMap(PointSet3D):
         gl.glColorPointer(4, gl.GL_DOUBLE, 0, self.VBOPixVC)
 
         self.VBOPixTIdx.bind()
-        # gl.glPolygonMode(gl.GL_FRONT_AND_BACK, gl.GL_LINE)
+        if isWireFrame:
+            gl.glPolygonMode(gl.GL_FRONT_AND_BACK, gl.GL_LINE)
         gl.glDrawElements(gl.GL_TRIANGLES, int(len(self.VBOPixTIdx)), gl.GL_UNSIGNED_INT, None)
 
         gl.glDisableClientState(gl.GL_COLOR_ARRAY)

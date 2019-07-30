@@ -209,6 +209,8 @@ def drawUnitCube(isRainbow=False, Color=(1, 1, 1), Alpha=1.0):
 
     gl.glPopAttrib()
 
+def drawCheckerBoardVBO(floorSize, squareWidthInPixel, squareHeightInPixel, SceneHeight):
+    pass
 
 def drawCheckerBoard(floorSize, squareWidthInPixel, squareHeightInPixel, SceneHeight):
     mat_specular = np.array([1.0, 1.0, 1.0, 1.0])
