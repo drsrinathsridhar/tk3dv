@@ -303,12 +303,12 @@ class NOCSMapModule(EaselModule):
 
 
     def keyPressEvent(self, a0: QKeyEvent):
-        if a0.modifiers() != QtCore.Qt.NoModifier:
-            return
-
         if a0.key() == QtCore.Qt.Key_Plus:  # Increase or decrease point size
             if self.PointSize < 20:
                 self.PointSize = self.PointSize + 1
+
+        if a0.modifiers() != QtCore.Qt.NoModifier:
+            return
 
         if a0.key() == QtCore.Qt.Key_Minus:  # Increase or decrease point size
             if self.PointSize > 1:
