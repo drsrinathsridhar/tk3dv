@@ -1,11 +1,11 @@
 # TODO
 ## Common
-- [ ] VBO-based ground plane rendering
+- [x] VBO-based ground plane rendering
 - [ ] Camera frustum visualization
 
 
 ## pyEasel
-- [ ] Dark mode for plane and background
+- [x] Dark mode for plane and background
 - [x] Unified key combination for global shortcuts
 - [x] Camera rotation shortcut
 - [ ] Save and load fixed camera poses

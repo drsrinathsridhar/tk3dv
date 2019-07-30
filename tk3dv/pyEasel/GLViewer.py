@@ -49,6 +49,18 @@ class GLViewer(QOpenGLWidget):
         self.LookAt = np.array([0.0, 0.0, 0.0])
         self.UpDir = np.array([0.0, 1.0, 0.0])
 
+        self.CamPosStack = np.zeros([0, 3])
+        self.CamPosStack = np.vstack([self.CamPosStack, self.CameraPosition])
+        self.CamPosStack = np.vstack([self.CamPosStack, self.CameraPosition + np.array([100, 100, 0])])
+        self.CamPosStack = np.vstack([self.CamPosStack, self.CameraPosition + np.array([300, 100, 0])])
+
+        self.LAtStack = np.zeros([0, 3])
+        self.LAtStack = np.vstack([self.LAtStack, self.LookAt])
+        self.LAtStack = np.vstack([self.LAtStack, self.LookAt])
+        self.LAtStack = np.vstack([self.LAtStack, self.LookAt])
+
+        self.activeCamStackIdx = 0
+
         self.Pitch = 0.0 # Radians
         self.Roll = 0.0
         self.Yaw = 0.0
@@ -117,9 +129,12 @@ class GLViewer(QOpenGLWidget):
 
     def updateState(self):
         RotMat = self.makeRotationMatrix()
-        self.CameraPosition = RotMat.dot(np.array([0, 0, self.Distance])) + self.Translation
-        self.LookAt = RotMat.dot(np.array([0, 0, 0])) + self.Translation
+        self.CamPosStack[0] = RotMat.dot(np.array([0, 0, self.Distance])) + self.Translation
+        self.LAtStack[0] = RotMat.dot(np.array([0, 0, 0])) + self.Translation
         self.UpDir = RotMat.dot(np.array([0, 1, 0]))
+
+        self.CameraPosition = self.CamPosStack[self.activeCamStackIdx]
+        self.LookAt = self.LAtStack[self.activeCamStackIdx]
 
         self.updateCamera()
 
@@ -199,12 +214,12 @@ class GLViewer(QOpenGLWidget):
                 self.update()
             if (a0.key() == QtCore.Qt.Key_D):
                 self.isDarkMode = not self.isDarkMode
-                if self.isDarkMode:
-                    print('[ INFO ]: Enabling dark mode.')
-                else:
-                    print('[ INFO ]: Disabling dark mode.')
+                print('[ INFO ]: Enabling dark mode.') if self.isDarkMode else print('[ INFO ]: Disabling dark mode.')
                 self.clearColor()
                 self.update()
+            if (a0.key() == QtCore.Qt.Key_1):
+                self.activeCamStackIdx = (self.activeCamStackIdx+1)%self.CamPosStack.shape[0]
+                self.updateState()
             if (a0.key() == QtCore.Qt.Key_R):
                 self.isRotateCamera = not self.isRotateCamera
                 self.isUpdateEveryStep = self.isRotateCamera
