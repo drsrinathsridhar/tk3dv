@@ -13,7 +13,7 @@ class Easel(glv.GLViewer):
     def __init__(self, OtherModules=[], argv=None):
         super().__init__()
         self.setWindowTitle('pyEasel')
-        self.isRenderPlane = True
+        self.isRenderPlane = False
         self.isRenderAxis = True
 
         self.Modules = []
