@@ -28,7 +28,7 @@ class GLViewer(QOpenGLWidget):
         self.Width = self.width()
         self.Height = self.height()
         # self.setMinimumSize(640, 480)
-        self.isRenderPlane = True
+        self.isRenderPlane = False
         self.isRenderPlaneWire = False
         self.isRenderAxis = True
         self.isRotateCamera = False
