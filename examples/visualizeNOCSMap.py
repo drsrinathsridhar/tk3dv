@@ -31,7 +31,7 @@ class NOCSMapModule(EaselModule):
                               help='Specify the camera extrinsics corresponding to the input NOCS maps. * globbing is supported.',
                               required=False)
         ArgGroup.add_argument('--num-points', help='Specify the number of pixels to use for camera pose registration.', default=1000, type=int, required=False)
-
+        ArgGroup.add_argument('--error-viz', help='Specify error wrto Nth NOCS map. If multiple NOCS maps are provided. Will compute the L2 errors between the Nth NOCS map and the rest. Will render this instead of RGB or colors.', default=-1, type=int, required=False)
 
         ArgGroup.add_argument('--no-pose', help='Choose to not estimate pose.', action='store_true')
         self.Parser.set_defaults(no_pose=False)
@@ -68,7 +68,9 @@ class NOCSMapModule(EaselModule):
         self.showBB = False
         self.showPoints = False
         self.showWireFrame = False
+        self.isVizError = False
         self.loadData()
+        self.generateDiffMap()
 
     def drawNOCS(self, lineWidth=2.0, ScaleX=1, ScaleY=1, ScaleZ=1, OffsetX=0, OffsetY=0, OffsetZ=0):
         gl.glPushMatrix()
@@ -78,6 +80,27 @@ class NOCSMapModule(EaselModule):
         drawing.drawUnitWireCube(lineWidth, True)
 
         gl.glPopMatrix()
+
+    def generateDiffMap(self):
+        if self.Args.error_viz != -1:
+            self.isVizError = True
+            self.ErrorReferenceNM = self.Args.error_viz
+            if self.ErrorReferenceNM >= len(self.NOCSMaps):
+                print('[ WARN ]: Resetting reference NOCS map to 0 for error computation.')
+                self.ErrorReferenceNM = 0 # Reset to first
+
+
+        if self.isVizError == True:
+            for i in range(0, len(self.NOCSMaps)):
+                DM = self.NOCSMaps[i].astype(np.float)-self.NOCSMaps[self.ErrorReferenceNM].astype(np.float) # Convert to float
+                Norm = np.linalg.norm(DM, axis=2)
+                Frac = 10
+                NormFact = (441.6729 / Frac) / 255 # Maximum possible error in NOCS is 441.6729 == sqrt(3 * 255^2). Let's take a fraction of that
+                Norm = Norm / (NormFact)
+                Norm = Norm.astype(np.uint8)
+                NormCol = cv2.applyColorMap(Norm, cv2.COLORMAP_JET)
+                cv2.imwrite('norm_{}.png'.format(str(i).zfill(3)), NormCol)
+                self.NOCS[i] = ds.NOCSMap(self.NOCSMaps[i], RGB=cv2.cvtColor(NormCol, cv2.COLOR_BGR2RGB))# IMPORTANT: OpenCV loads as BGR, so convert to RGB
 
     @staticmethod
     def estimateCameraPoseFromNM(NOCSMap, NOCS, N=None, Intrinsics=None):
