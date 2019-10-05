@@ -99,7 +99,7 @@ class NOCSMapModule(EaselModule):
                 Norm = Norm / (NormFact)
                 Norm = Norm.astype(np.uint8)
                 NormCol = cv2.applyColorMap(Norm, cv2.COLORMAP_JET)
-                cv2.imwrite('norm_{}.png'.format(str(i).zfill(3)), NormCol)
+                #cv2.imwrite('norm_{}.png'.format(str(i).zfill(3)), NormCol)
                 self.NOCS[i] = ds.NOCSMap(self.NOCSMaps[i], RGB=cv2.cvtColor(NormCol, cv2.COLOR_BGR2RGB))# IMPORTANT: OpenCV loads as BGR, so convert to RGB
 
     @staticmethod
