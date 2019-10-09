@@ -227,6 +227,7 @@ class ptNet(nn.Module):
                     'Epoch': self.StartEpoch + Epoch + 1,
                     'SavedTimeZ': ptUtils.getZuluTimeString(),
                 }
+                print('HERHERHERE: ', self.ExptDirPath)
                 OutFilePath = ptUtils.savePyTorchCheckpoint(CheckpointDict, self.ExptDirPath)
                 ptUtils.saveLossesCurve(self.LossHistory, self.ValLossHistory, out_path=os.path.splitext(OutFilePath)[0] + '.jpg',
                                         xlim = [0, int(self.Config.Args.epochs + self.StartEpoch)], legend=CurrLegend, title=self.Config.Args.expt_name)
