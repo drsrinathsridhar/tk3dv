@@ -52,6 +52,7 @@ class ptNetExptConfig():
             ptUtils.ptToolsLogger.info('Converted relative path {} to absolute path {}'.format(self.Args.rel_output_dir, self.Args.output_dir))
 
         # Logging directory and file
+        self.ExptDirPath = ''
         self.ExptDirPath = os.path.join(ptUtils.expandTilde(self.Args.output_dir), self.Args.expt_name)
         if os.path.exists(self.ExptDirPath) == False:
             os.makedirs(self.ExptDirPath)
@@ -83,11 +84,10 @@ class ptNet(nn.Module):
         super().__init__()
 
         self.Config = ptNetExptConfig(InputArgs=Args)
-        self.ExptDirPath = self.Config.ExptDirPath
 
         # Defaults
         self.StartEpoch = 0
-        self.ExptDirPath = ''
+        self.ExptDirPath = self.Config.ExptDirPath
         self.SaveFrequency = self.Config.Args.save_freq if self.Config.Args.save_freq > 0 else self.Config.Args.epochs
         self.LossHistory = []
         self.ValLossHistory = []
@@ -151,7 +151,6 @@ class ptNet(nn.Module):
                              .format('=' * done, '-' * (50 - done), np.mean(np.asarray(ValLosses)), ptUtils.getTimeDur(Elapsed)))
             sys.stdout.flush()
         sys.stdout.write('\n')
-
 
         return ValLosses
 
@@ -227,7 +226,6 @@ class ptNet(nn.Module):
                     'Epoch': self.StartEpoch + Epoch + 1,
                     'SavedTimeZ': ptUtils.getZuluTimeString(),
                 }
-                print('HERHERHERE: ', self.ExptDirPath)
                 OutFilePath = ptUtils.savePyTorchCheckpoint(CheckpointDict, self.ExptDirPath)
                 ptUtils.saveLossesCurve(self.LossHistory, self.ValLossHistory, out_path=os.path.splitext(OutFilePath)[0] + '.jpg',
                                         xlim = [0, int(self.Config.Args.epochs + self.StartEpoch)], legend=CurrLegend, title=self.Config.Args.expt_name)
