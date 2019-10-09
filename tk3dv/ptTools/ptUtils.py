@@ -7,7 +7,8 @@ from palettable.cartocolors.diverging import Earth_2
 import matplotlib.pyplot as plt
 import logging
 
-ptToolsLogger = logging.getLogger()
+ptToolsLogger = logging.getLogger(__name__)
+ptToolsLogger.propagate = False
 # LogFormat = logging.Formatter('[ %(asctime)s ] [ {} ] [ %(levelname)-5.5s ]: %(message)s'.format(__name__))
 LogFormat = logging.Formatter('[ %(levelname)-5.5s ]: %(message)s')
 StdoutHandler = logging.StreamHandler(sys.stdout)
@@ -149,7 +150,7 @@ def saveLossesCurve(*args, **kwargs):
     if 'out_path' in kwargs:
         plt.savefig(kwargs['out_path'])
     else:
-        ptToolsLogger.warn('No output path (out_path) specified. ptUtils.saveLossesCurve()')
+        ptToolsLogger.warning('No output path (out_path) specified. ptUtils.saveLossesCurve()')
 
 
 class loadArgsFromFile(argparse.Action):
@@ -180,10 +181,10 @@ def setDevice(RequestedGPUID):
     DeviceName ='cpu' # Default
     if RequestedGPUID >= -1:
         if torch.cuda.is_available() == False:
-            ptToolsLogger.warn('No GPUs available. Using CPU.')
+            ptToolsLogger.warning('No GPUs available. Using CPU.')
         else:
             if RequestedGPUID >= torch.cuda.device_count():
-                ptToolsLogger.warn('GPU {} is unavailable. Using cuda:0.'.format(RequestedGPUID))
+                ptToolsLogger.warning('GPU {} is unavailable. Using cuda:0.'.format(RequestedGPUID))
                 DeviceName = 'cuda:0'
             elif RequestedGPUID == -1:
                 DeviceName = 'cuda:0'

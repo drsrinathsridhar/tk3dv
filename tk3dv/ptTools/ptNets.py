@@ -59,6 +59,19 @@ class ptNetExptConfig():
                 else:
                     print('{:<15}:   {:<50}'.format(Arg, 'NOT DEFINED'))
 
+        # Logging file
+        self.ExptDirPath = os.path.join(ptUtils.expandTilde(self.Args.output_dir), self.Args.expt_name)
+        if os.path.exists(self.ExptDirPath) == False:
+            os.makedirs(self.ExptDirPath)
+
+        ExptLogFile = os.path.join(self.ExptDirPath, self.Args.expt_name + '.log')
+        if os.path.exists(ExptLogFile) == False:
+            with open(ExptLogFile, 'a'):
+                os.utime(ExptLogFile, None)
+        LogFileHandler = logging.FileHandler(ExptLogFile)
+        LogFileHandler.setFormatter(ptUtils.LogFormat)
+        ptUtils.ptToolsLogger.addHandler(LogFileHandler)
+
     def getHelp(self):
         self.Parser.print_help()
 
@@ -70,6 +83,7 @@ class ptNet(nn.Module):
         super().__init__()
 
         self.Config = ptNetExptConfig(InputArgs=Args)
+        self.ExptDirPath = self.Config.ExptDirPath
 
         # Defaults
         self.StartEpoch = 0
@@ -90,10 +104,6 @@ class ptNet(nn.Module):
         self.load_state_dict(CheckpointDict['ModelStateDict'])
 
     def setupCheckpoint(self, TrainDevice):
-        self.ExptDirPath = os.path.join(ptUtils.expandTilde(self.Config.Args.output_dir), self.Config.Args.expt_name)
-        if os.path.exists(self.ExptDirPath) == False:
-            os.makedirs(self.ExptDirPath)
-
         LatestCheckpointDict = None
         AllCheckpoints = glob.glob(os.path.join(self.ExptDirPath, '*.tar'))
         if len(AllCheckpoints) > 0:
@@ -181,7 +191,7 @@ class ptNet(nn.Module):
                 # Terminate early if loss is nan
                 isTerminateEarly = False
                 if math.isnan(EpochLosses[-1]):
-                    ptUtils.ptToolsLogger.warn('NaN loss encountered. Terminating training and saving current model checkpoint (might be junk).')
+                    ptUtils.ptToolsLogger.warning('NaN loss encountered. Terminating training and saving current model checkpoint (might be junk).')
                     isTerminateEarly = True
                     break
 
@@ -229,5 +239,5 @@ class ptNet(nn.Module):
         ptUtils.ptToolsLogger.info('All done in {} s.'.format(ptUtils.getTimeDur((AllToc - AllTic) * 1e-6)))
 
     def forward(self, x):
-        ptUtils.ptToolsLogger.warn('This is an identity network. Override this in a derived class.')
+        ptUtils.ptToolsLogger.warning('This is an identity network. Override this in a derived class.')
         return x
