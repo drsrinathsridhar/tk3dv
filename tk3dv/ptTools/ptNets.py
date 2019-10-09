@@ -58,19 +58,22 @@ class ptNetExptConfig():
             os.makedirs(self.ExptDirPath)
 
         self.ExptLogFile = os.path.join(self.ExptDirPath, self.Args.expt_name + '.log')
-        if os.path.exists(self.ExptLogFile) == False:
-            with open(self.ExptLogFile, 'a'):
-                os.utime(self.ExptLogFile, None)
+        # if os.path.exists(self.ExptLogFile) == False:
+        with open(self.ExptLogFile, 'w+', newline='') as f:
+            os.utime(self.ExptLogFile, None)
 
         sys.stdout = ptUtils.ptLogger(sys.stdout, self.ExptLogFile)
+        sys.stderr = ptUtils.ptLogger(sys.stderr, self.ExptLogFile)
 
         if isPrint:
+            print('-'*60)
             ArgsDict = vars(self.Args)
             for Arg in ArgsDict:
                 if ArgsDict[Arg] is not None:
                     print('{:<15}:   {:<50}'.format(Arg, ArgsDict[Arg]))
                 else:
                     print('{:<15}:   {:<50}'.format(Arg, 'NOT DEFINED'))
+            print('-'*60)
 
     def getHelp(self):
         self.Parser.print_help()
@@ -228,7 +231,8 @@ class ptNet(nn.Module):
                 OutFilePath = ptUtils.savePyTorchCheckpoint(CheckpointDict, self.ExptDirPath)
                 ptUtils.saveLossesCurve(self.LossHistory, self.ValLossHistory, out_path=os.path.splitext(OutFilePath)[0] + '.jpg',
                                         xlim = [0, int(self.Config.Args.epochs + self.StartEpoch)], legend=CurrLegend, title=self.Config.Args.expt_name)
-                print('[ INFO ]: Saved checkpoint and loss curve.')
+                # print('[ INFO ]: Checkpoint saved.')
+                print('*'*53) # Checkpoint saved. 50 + 3 characters [>]
 
                 if isTerminateEarly:
                     break
