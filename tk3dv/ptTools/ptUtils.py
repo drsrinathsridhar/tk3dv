@@ -5,9 +5,17 @@ import numpy as np
 from palettable.tableau import Tableau_20, BlueRed_12, ColorBlind_10, GreenOrange_12
 from palettable.cartocolors.diverging import Earth_2
 import matplotlib.pyplot as plt
+import logging
+
+ptToolsLogger = logging.getLogger()
+# LogFormat = logging.Formatter('[ %(asctime)s ] [ {} ] [ %(levelname)-5.5s ]: %(message)s'.format(__name__))
+LogFormat = logging.Formatter('[ %(levelname)-5.5s ]: %(message)s')
+StdoutHandler = logging.StreamHandler(sys.stdout)
+StdoutHandler.setFormatter(LogFormat)
+ptToolsLogger.addHandler(StdoutHandler)
+ptToolsLogger.setLevel(logging.DEBUG)
 
 # Utilities for PyTorch
-
 def restricted_float(x):
     x = float(x)
     if x < -1.0 or x > 10.0:
@@ -82,7 +90,7 @@ def loadLatestPyTorchCheckpoint(InDir, CheckpointName='', map_location='cpu'):
         raise RuntimeError('No checkpoints stored in ' + InDir)
     AllCheckpoints.sort()
 
-    print('[ INFO ]: Loading checkpoint ', AllCheckpoints[-1])
+    ptToolsLogger.info('Loading checkpoint {}'.format(AllCheckpoints[-1]))
     return loadPyTorchCheckpoint(AllCheckpoints[-1])
 
 def torch2np(ImageTorch):
@@ -141,7 +149,7 @@ def saveLossesCurve(*args, **kwargs):
     if 'out_path' in kwargs:
         plt.savefig(kwargs['out_path'])
     else:
-        print('[ WARN ]: No output path (out_path) specified. ptUtils.saveLossesCurve()')
+        ptToolsLogger.warn('No output path (out_path) specified. ptUtils.saveLossesCurve()')
 
 
 class loadArgsFromFile(argparse.Action):
@@ -160,7 +168,7 @@ def printArgs(Args):
 
 def seedRandom(seed):
     # NOTE: This gets us very close to deterministic but there are some small differences in 1e-4 and smaller scales
-    print('[ INFO ]: Seeding RNGs with', seed)
+    ptToolsLogger.info('Seeding RNGs with {}'.format(seed))
     torch.backends.cudnn.deterministic = True
     random.seed(seed)
     np.random.seed(seed)
@@ -172,17 +180,17 @@ def setDevice(RequestedGPUID):
     DeviceName ='cpu' # Default
     if RequestedGPUID >= -1:
         if torch.cuda.is_available() == False:
-            print('[ WARN ]: No GPUs available. Using CPU.')
+            ptToolsLogger.warn('No GPUs available. Using CPU.')
         else:
             if RequestedGPUID >= torch.cuda.device_count():
-                print('[ WARN ]: GPU {} is unavailable. Using cuda:0.'.format(RequestedGPUID))
+                ptToolsLogger.warn('GPU {} is unavailable. Using cuda:0.'.format(RequestedGPUID))
                 DeviceName = 'cuda:0'
             elif RequestedGPUID == -1:
                 DeviceName = 'cuda:0'
             else:
                 DeviceName = 'cuda:' + str(RequestedGPUID)
 
-    print('[ INFO ]: Using device:', DeviceName)
+    ptToolsLogger.info('Using device: {}'.format(DeviceName))
     Device = torch.device(DeviceName)
 
     return Device

@@ -9,7 +9,7 @@ import numpy as np
 FileDirPath = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.join(FileDirPath, '.'))
 
-import ptUtils
+import logging, ptUtils
 
 class ptNetExptConfig():
     def __init__(self, InputArgs=None, isPrint=True):
@@ -42,14 +42,14 @@ class ptNetExptConfig():
 
         if self.Args.rel_output_dir is not None: # Relative path takes precedence
             if self.Args.output_dir is not None:
-                print('[ INFO ]: Relative path taking precedence to absolute path.')
+                ptUtils.ptToolsLogger.info('Relative path taking precedence to absolute path.')
             DirPath = os.getcwd() # os.path.dirname(os.path.realpath(__file__))
             for Arg in InputArgs:
                 if '@' in Arg: # Config file is passed, path should be relative to config file
                     DirPath = os.path.abspath(os.path.dirname(ptUtils.expandTilde(Arg[1:]))) # Abs directory path of config file
                     break
             self.Args.output_dir = os.path.join(DirPath, self.Args.rel_output_dir)
-            print('[ INFO ]: Converted relative path {} to absolute path {}'.format(self.Args.rel_output_dir, self.Args.output_dir))
+            ptUtils.ptToolsLogger.info('Converted relative path {} to absolute path {}'.format(self.Args.rel_output_dir, self.Args.output_dir))
 
         if isPrint:
             ArgsDict = vars(self.Args)
@@ -81,14 +81,13 @@ class ptNet(nn.Module):
     def loadCheckpoint(self, Path=None, Device='cpu'):
         if Path is None:
             self.ExptDirPath = os.path.join(ptUtils.expandTilde(self.Config.Args.output_dir), self.Config.Args.expt_name)
-            print('[ INFO ]: Loading from latest checkpoint.')
+            ptUtils.ptToolsLogger.info('Loading from latest checkpoint.')
             CheckpointDict = ptUtils.loadLatestPyTorchCheckpoint(self.ExptDirPath, map_location=Device)
         else: # Load latest
-            print('[ INFO ]: Loading from checkpoint', Path)
+            ptUtils.ptToolsLogger.info('Loading from checkpoint {}'.format(Path))
             CheckpointDict = ptUtils.loadPyTorchCheckpoint(Path)
 
         self.load_state_dict(CheckpointDict['ModelStateDict'])
-
 
     def setupCheckpoint(self, TrainDevice):
         self.ExptDirPath = os.path.join(ptUtils.expandTilde(self.Config.Args.output_dir), self.Config.Args.expt_name)
@@ -99,7 +98,7 @@ class ptNet(nn.Module):
         AllCheckpoints = glob.glob(os.path.join(self.ExptDirPath, '*.tar'))
         if len(AllCheckpoints) > 0:
             LatestCheckpointDict = ptUtils.loadLatestPyTorchCheckpoint(self.ExptDirPath, map_location=TrainDevice)
-            print('[ INFO ]: Loading from last checkpoint.')
+            ptUtils.ptToolsLogger.info('Loading from last checkpoint.')
 
         if LatestCheckpointDict is not None:
             # Make sure experiment names match
@@ -120,7 +119,7 @@ class ptNet(nn.Module):
                             if isinstance(v, torch.Tensor):
                                 state[k] = v.to(TrainDevice)
             else:
-                print('[ INFO ]: Experiment names do not match. Training from scratch.')
+                ptUtils.ptToolsLogger.info('Experiment names do not match. Training from scratch.')
 
     def validate(self, ValDataLoader, Objective, Device='cpu'):
         ValLosses = []
@@ -155,7 +154,7 @@ class ptNet(nn.Module):
 
         self.setupCheckpoint(TrainDevice)
 
-        print('[ INFO ]: Training on', TrainDevice)
+        ptUtils.ptToolsLogger.info('Training on {}'.format(TrainDevice))
         self.to(TrainDevice)
         CurrLegend = ['Train loss']
 
@@ -182,8 +181,7 @@ class ptNet(nn.Module):
                 # Terminate early if loss is nan
                 isTerminateEarly = False
                 if math.isnan(EpochLosses[-1]):
-                    print(
-                        '[ WARN ]: NaN loss encountered. Terminating training and saving current model checkpoint (might be junk).')
+                    ptUtils.ptToolsLogger.warn('NaN loss encountered. Terminating training and saving current model checkpoint (might be junk).')
                     isTerminateEarly = True
                     break
 
@@ -222,14 +220,14 @@ class ptNet(nn.Module):
                 OutFilePath = ptUtils.savePyTorchCheckpoint(CheckpointDict, self.ExptDirPath)
                 ptUtils.saveLossesCurve(self.LossHistory, self.ValLossHistory, out_path=os.path.splitext(OutFilePath)[0] + '.jpg',
                                         xlim = [0, int(self.Config.Args.epochs + self.StartEpoch)], legend=CurrLegend, title=self.Config.Args.expt_name)
-                print('[ INFO ]: Saved checkpoint and loss curve.')
+                ptUtils.ptToolsLogger.info('Saved checkpoint and loss curve.')
 
                 if isTerminateEarly:
                     break
 
         AllToc = ptUtils.getCurrentEpochTime()
-        print('[ INFO ]: All done in', ptUtils.getTimeDur((AllToc - AllTic) * 1e-6), '.')
+        ptUtils.ptToolsLogger.info('All done in {} s.'.format(ptUtils.getTimeDur((AllToc - AllTic) * 1e-6)))
 
     def forward(self, x):
-        print('[ WARN ]: This is an identity network. Override this in a derived class.')
+        ptUtils.ptToolsLogger.warn('This is an identity network. Override this in a derived class.')
         return x
