@@ -51,15 +51,7 @@ class ptNetExptConfig():
             self.Args.output_dir = os.path.join(DirPath, self.Args.rel_output_dir)
             ptUtils.ptToolsLogger.info('Converted relative path {} to absolute path {}'.format(self.Args.rel_output_dir, self.Args.output_dir))
 
-        if isPrint:
-            ArgsDict = vars(self.Args)
-            for Arg in ArgsDict:
-                if ArgsDict[Arg] is not None:
-                    print('{:<15}:   {:<50}'.format(Arg, ArgsDict[Arg]))
-                else:
-                    print('{:<15}:   {:<50}'.format(Arg, 'NOT DEFINED'))
-
-        # Logging file
+        # Logging directory and file
         self.ExptDirPath = os.path.join(ptUtils.expandTilde(self.Args.output_dir), self.Args.expt_name)
         if os.path.exists(self.ExptDirPath) == False:
             os.makedirs(self.ExptDirPath)
@@ -71,6 +63,14 @@ class ptNetExptConfig():
         LogFileHandler = logging.FileHandler(ExptLogFile)
         LogFileHandler.setFormatter(ptUtils.LogFormat)
         ptUtils.ptToolsLogger.addHandler(LogFileHandler)
+
+        if isPrint:
+            ArgsDict = vars(self.Args)
+            for Arg in ArgsDict:
+                if ArgsDict[Arg] is not None:
+                    print('{:<15}:   {:<50}'.format(Arg, ArgsDict[Arg]))
+                else:
+                    print('{:<15}:   {:<50}'.format(Arg, 'NOT DEFINED'))
 
     def getHelp(self):
         self.Parser.print_help()
