@@ -7,14 +7,36 @@ from palettable.cartocolors.diverging import Earth_2
 import matplotlib.pyplot as plt
 import logging
 
-ptToolsLogger = logging.getLogger(__name__)
-ptToolsLogger.propagate = False
-# LogFormat = logging.Formatter('[ %(asctime)s ] [ {} ] [ %(levelname)-5.5s ]: %(message)s'.format(__name__))
-LogFormat = logging.Formatter('[ %(levelname)-5.5s ]: %(message)s')
-StdoutHandler = logging.StreamHandler(sys.stdout)
-StdoutHandler.setFormatter(LogFormat)
-ptToolsLogger.addHandler(StdoutHandler)
-ptToolsLogger.setLevel(logging.DEBUG)
+# ptToolsLogger = logging.getLogger(__name__)
+# ptToolsLogger.propagate = False
+# # LogFormat = logging.Formatter('[ %(asctime)s ] [ {} ] [ %(levelname)-5.5s ]: %(message)s'.format(__name__))
+# LogFormat = logging.Formatter('[ %(levelname)-5.5s ]: %(message)s')
+# EmptyFormat = logging.Formatter('%(message)s')
+# StdoutHandler = logging.StreamHandler(sys.stdout)
+# StdoutHandler.setFormatter(LogFormat)
+# ptToolsLogger.addHandler(StdoutHandler)
+# ptToolsLogger.setLevel(logging.DEBUG)
+
+class ptLogger():
+    def __init__(self, Stream=sys.stdout, OutFile=None):
+        self.Terminal = Stream
+        self.File = None
+        if OutFile is not None:
+            self.File = open(OutFile, 'w+')
+
+    def addFile(self, OutFile):
+        if OutFile is not None:
+            self.File = open(OutFile, 'w+')
+
+    def write(self, message):
+        self.Terminal.write(message)
+        if self.File is not None:
+            self.File.write(message)
+
+    def flush(self):
+        self.Terminal.flush()
+        if self.File is not None:
+            self.File.flush()
 
 # Utilities for PyTorch
 def restricted_float(x):
@@ -91,7 +113,7 @@ def loadLatestPyTorchCheckpoint(InDir, CheckpointName='', map_location='cpu'):
         raise RuntimeError('No checkpoints stored in ' + InDir)
     AllCheckpoints.sort()
 
-    ptToolsLogger.info('Loading checkpoint {}'.format(AllCheckpoints[-1]))
+    print('[ INFO ]: Loading checkpoint {}'.format(AllCheckpoints[-1]))
     return loadPyTorchCheckpoint(AllCheckpoints[-1])
 
 def torch2np(ImageTorch):
@@ -150,7 +172,7 @@ def saveLossesCurve(*args, **kwargs):
     if 'out_path' in kwargs:
         plt.savefig(kwargs['out_path'])
     else:
-        ptToolsLogger.warning('No output path (out_path) specified. ptUtils.saveLossesCurve()')
+        print('[ WARN ]: No output path (out_path) specified. ptUtils.saveLossesCurve()')
 
 
 class loadArgsFromFile(argparse.Action):
@@ -169,7 +191,7 @@ def printArgs(Args):
 
 def seedRandom(seed):
     # NOTE: This gets us very close to deterministic but there are some small differences in 1e-4 and smaller scales
-    ptToolsLogger.info('Seeding RNGs with {}'.format(seed))
+    print('[ INFO ]: Seeding RNGs with {}'.format(seed))
     torch.backends.cudnn.deterministic = True
     random.seed(seed)
     np.random.seed(seed)
@@ -181,17 +203,17 @@ def setDevice(RequestedGPUID):
     DeviceName ='cpu' # Default
     if RequestedGPUID >= -1:
         if torch.cuda.is_available() == False:
-            ptToolsLogger.warning('No GPUs available. Using CPU.')
+            print('[ WARN ]: No GPUs available. Using CPU.')
         else:
             if RequestedGPUID >= torch.cuda.device_count():
-                ptToolsLogger.warning('GPU {} is unavailable. Using cuda:0.'.format(RequestedGPUID))
+                print('[ WARN ]: GPU {} is unavailable. Using cuda:0.'.format(RequestedGPUID))
                 DeviceName = 'cuda:0'
             elif RequestedGPUID == -1:
                 DeviceName = 'cuda:0'
             else:
                 DeviceName = 'cuda:' + str(RequestedGPUID)
 
-    ptToolsLogger.info('Using device: {}'.format(DeviceName))
+    print('[ INFO ]: Using device: {}'.format(DeviceName))
     Device = torch.device(DeviceName)
 
     return Device
