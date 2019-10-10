@@ -9,12 +9,13 @@ import numpy as np
 FileDirPath = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.join(FileDirPath, '.'))
 
-import logging, ptUtils
+import ptUtils
 
 class ptNetExptConfig():
     def __init__(self, InputArgs=None, isPrint=True):
         self.Parser = argparse.ArgumentParser(description='Parse arguments for a PyTorch neural network.', fromfile_prefix_chars='@')
 
+        self.Parser.add_argument('--mode', help='Operation mode.', choices=['train', 'val', 'test', 'unknown'], default='unknown')
         # Search params
         self.Parser.add_argument('--learning-rate', help='Choose the learning rate.', required=False, default=0.001,
                             type=ptUtils.restricted_float)
@@ -57,7 +58,7 @@ class ptNetExptConfig():
         if os.path.exists(self.ExptDirPath) == False:
             os.makedirs(self.ExptDirPath)
 
-        self.ExptLogFile = os.path.join(self.ExptDirPath, self.Args.expt_name + '.log')
+        self.ExptLogFile = os.path.join(self.ExptDirPath, self.Args.expt_name + '_' + self.Args.mode + '.log')
         # if os.path.exists(self.ExptLogFile) == False:
         with open(self.ExptLogFile, 'w+', newline='') as f:
             os.utime(self.ExptLogFile, None)
