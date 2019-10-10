@@ -294,7 +294,7 @@ class GenericImageDataset(torch.utils.data.Dataset):
 
     def saveItem(self, idx, OutPath='.'):
         Color00, OutTupRGB, OutTupMask = Data.convertItem(idx, isMaskNOX=True)
-        # GenericImageDataset.saveData((Color00,) + OutTupRGB, OutPath)
+        GenericImageDataset.saveData((Color00,) + OutTupRGB, OutPath)
 
     def visualizeRandom(self, nSamples=10):
         nColsPerSample = len(self.FrameLoadStr)
@@ -335,7 +335,7 @@ if __name__ == '__main__':
     Args, _ = Parser.parse_known_args()
 
     Data = GenericImageDataset(root=Args.data_dir, train=True, download=True, imgSize=(320, 240), loadLevel='all')#, FrameLoadStr=['color00', 'normals00', 'nox00', 'pnnocs00', 'uv00', 'camera'])
-    Data.saveItem(random.randint(0, len(Data)))
+    # Data.saveItem(random.randint(0, len(Data)))
     Data.visualizeRandom(10)
     # exit()
 
