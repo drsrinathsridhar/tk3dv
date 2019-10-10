@@ -150,7 +150,7 @@ class ptNet(nn.Module):
             Elapsed = math.floor((Toc - Tic) * 1e-6)
             done = int(50 * (i+1) / len(ValDataLoader))
             sys.stdout.write(('\r[{}>{}] val loss - {:.16f}, elapsed - {}')
-                             .format('=' * done, '-' * (50 - done), np.mean(np.asarray(ValLosses)), ptUtils.getTimeDur(Elapsed)))
+                             .format('+' * done, '-' * (50 - done), np.mean(np.asarray(ValLosses)), ptUtils.getTimeDur(Elapsed)))
             sys.stdout.flush()
         sys.stdout.write('\n')
 
