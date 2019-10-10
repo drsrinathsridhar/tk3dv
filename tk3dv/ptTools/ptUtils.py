@@ -51,6 +51,29 @@ def getCurrentEpochTime():
 def getZuluTimeString(StringFormat = '%Y-%m-%dT%H-%M-%S'):
     return datetime.utcnow().strftime(StringFormat)
 
+def getLocalTimeString(StringFormat = '%Y-%m-%dT%H-%M-%S'):
+    return datetime.now().strftime(StringFormat)
+
+def getTimeString(TimeString='humanlocal'):
+    TS = TimeString.lower()
+    OTS = 'UNKNOWN'
+
+    if 'epoch' in TS:
+        OTS = str(getCurrentEpochTime())
+    else:
+        if 'zulu' in TS:
+            OTS = getZuluTimeString(StringFormat='%Y-%m-%dT%H-%M-%SZ')
+        elif 'local' in TS:
+            OTS = getLocalTimeString(StringFormat='%Y-%m-%dT%H-%M-%S')
+        elif 'eot' in TS: # End of time
+            OTS = '9999-12-31T23-59-59'
+
+    if 'human' in TS:
+        OTS += '_' + str(getCurrentEpochTime())
+
+    return OTS
+
+
 def dhms(td):
     d, h, m = td.days, td.seconds//3600, (td.seconds//60)%60
     s = td.seconds - ( (h*3600) + (m*60) ) # td.seconds are the seconds remaining after days have been removed
@@ -94,13 +117,14 @@ def expandTilde(Path):
 
     return Path
 
-def savePyTorchCheckpoint(CheckpointDict, OutDir):
+def savePyTorchCheckpoint(CheckpointDict, OutDir, TimeString='humanlocal'):
     # CheckpointDict should have a model name, otherwise, will store as UNKNOWN
     Name = 'UNKNOWN'
     if 'Name' in CheckpointDict:
         Name = CheckpointDict['Name']
 
-    OutFilePath = os.path.join(expandTilde(OutDir), Name + '_' + str(getCurrentEpochTime()) + '.tar')
+    OTS = getTimeString(TimeString)
+    OutFilePath = os.path.join(expandTilde(OutDir), Name + '_' + OTS + '.tar')
     torch.save(CheckpointDict, OutFilePath)
     return OutFilePath
 
@@ -111,7 +135,7 @@ def loadLatestPyTorchCheckpoint(InDir, CheckpointName='', map_location='cpu'):
     AllCheckpoints = glob.glob(os.path.join(expandTilde(InDir), CheckpointName + '*.tar'))
     if len(AllCheckpoints) <= 0:
         raise RuntimeError('No checkpoints stored in ' + InDir)
-    AllCheckpoints.sort()
+    AllCheckpoints.sort() # By name
 
     print('[ INFO ]: Loading checkpoint {}'.format(AllCheckpoints[-1]))
     return loadPyTorchCheckpoint(AllCheckpoints[-1])

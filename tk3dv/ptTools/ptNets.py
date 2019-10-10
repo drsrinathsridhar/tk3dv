@@ -57,7 +57,7 @@ class ptNetExptConfig():
         if os.path.exists(self.ExptDirPath) == False:
             os.makedirs(self.ExptDirPath)
 
-        self.ExptLogFile = os.path.join(self.ExptDirPath, self.Args.expt_name + '_' + str(ptUtils.getCurrentEpochTime()) + '.log')
+        self.ExptLogFile = os.path.join(self.ExptDirPath, self.Args.expt_name + '_' + ptUtils.getTimeString('humanlocal') + '.log')
         # if os.path.exists(self.ExptLogFile) == False:
         with open(self.ExptLogFile, 'w+', newline='') as f:
             os.utime(self.ExptLogFile, None)
@@ -171,74 +171,85 @@ class ptNet(nn.Module):
 
         AllTic = ptUtils.getCurrentEpochTime()
         for Epoch in range(self.Config.Args.epochs):
-            EpochLosses = [] # For all batches in an epoch
-            Tic = ptUtils.getCurrentEpochTime()
-            for i, (Data, Targets) in enumerate(TrainDataLoader, 0):  # Get each batch
-                DataTD = ptUtils.sendToDevice(Data, TrainDevice)
-                TargetsTD = ptUtils.sendToDevice(Targets, TrainDevice)
+            try:
+                EpochLosses = [] # For all batches in an epoch
+                Tic = ptUtils.getCurrentEpochTime()
+                for i, (Data, Targets) in enumerate(TrainDataLoader, 0):  # Get each batch
+                    DataTD = ptUtils.sendToDevice(Data, TrainDevice)
+                    TargetsTD = ptUtils.sendToDevice(Targets, TrainDevice)
 
-                self.Optimizer.zero_grad()
+                    self.Optimizer.zero_grad()
 
-                # Forward, backward, optimize
-                Output = self.forward(DataTD)
+                    # Forward, backward, optimize
+                    Output = self.forward(DataTD)
 
-                Loss = Objective(Output, TargetsTD)
-                Loss.backward()
-                self.Optimizer.step()
-                EpochLosses.append(Loss.item())
+                    Loss = Objective(Output, TargetsTD)
+                    Loss.backward()
+                    self.Optimizer.step()
+                    EpochLosses.append(Loss.item())
 
-                gc.collect() # Collect garbage after each batch
+                    gc.collect() # Collect garbage after each batch
 
-                # Terminate early if loss is nan
-                isTerminateEarly = False
-                if math.isnan(EpochLosses[-1]):
-                    print('[ WARN ]: NaN loss encountered. Terminating training and saving current model checkpoint (might be junk).')
-                    isTerminateEarly = True
-                    break
+                    # Terminate early if loss is nan
+                    isTerminateEarly = False
+                    if math.isnan(EpochLosses[-1]):
+                        print('[ WARN ]: NaN loss encountered. Terminating training and saving current model checkpoint (might be junk).')
+                        isTerminateEarly = True
+                        break
 
-                # Print stats
-                Toc = ptUtils.getCurrentEpochTime()
-                Elapsed = math.floor((Toc - Tic) * 1e-6)
-                TotalElapsed = math.floor((Toc - AllTic) * 1e-6)
-                # Compute ETA
-                TimePerBatch = (Toc - AllTic) / ((Epoch * len(TrainDataLoader)) + (i+1)) # Time per batch
-                ETA = math.floor(TimePerBatch * self.Config.Args.epochs * len(TrainDataLoader) * 1e-6)
-                done = int(50 * (i+1) / len(TrainDataLoader))
-                sys.stdout.write(('\r[{}>{}] epoch - {}/{}, train loss - {:.16f} | epoch - {}, total - {} ETA - {} |')
-                                 .format('=' * done, '-' * (50 - done), self.StartEpoch + Epoch + 1, self.StartEpoch + self.Config.Args.epochs
-                                         , np.mean(np.asarray(EpochLosses)), ptUtils.getTimeDur(Elapsed), ptUtils.getTimeDur(TotalElapsed), ptUtils.getTimeDur(ETA-TotalElapsed)))
-                sys.stdout.flush()
-            sys.stdout.write('\n')
+                    # Print stats
+                    Toc = ptUtils.getCurrentEpochTime()
+                    Elapsed = math.floor((Toc - Tic) * 1e-6)
+                    TotalElapsed = math.floor((Toc - AllTic) * 1e-6)
+                    # Compute ETA
+                    TimePerBatch = (Toc - AllTic) / ((Epoch * len(TrainDataLoader)) + (i+1)) # Time per batch
+                    ETA = math.floor(TimePerBatch * self.Config.Args.epochs * len(TrainDataLoader) * 1e-6)
+                    done = int(50 * (i+1) / len(TrainDataLoader))
+                    sys.stdout.write(('\r[{}>{}] epoch - {}/{}, train loss - {:.16f} | epoch - {}, total - {} ETA - {} |')
+                                     .format('=' * done, '-' * (50 - done), self.StartEpoch + Epoch + 1, self.StartEpoch + self.Config.Args.epochs
+                                             , np.mean(np.asarray(EpochLosses)), ptUtils.getTimeDur(Elapsed), ptUtils.getTimeDur(TotalElapsed), ptUtils.getTimeDur(ETA-TotalElapsed)))
+                    sys.stdout.flush()
+                sys.stdout.write('\n')
 
-            self.LossHistory.append(np.mean(np.asarray(EpochLosses)))
-            if ValDataLoader is not None:
-                ValLosses = self.validate(ValDataLoader, Objective, TrainDevice)
-                self.ValLossHistory.append(np.mean(np.asarray(ValLosses)))
-                # print('Last epoch val loss - {:.16f}'.format(self.ValLossHistory[-1]))
-                CurrLegend = ['Train loss', 'Val loss']
+                self.LossHistory.append(np.mean(np.asarray(EpochLosses)))
+                if ValDataLoader is not None:
+                    ValLosses = self.validate(ValDataLoader, Objective, TrainDevice)
+                    self.ValLossHistory.append(np.mean(np.asarray(ValLosses)))
+                    # print('Last epoch val loss - {:.16f}'.format(self.ValLossHistory[-1]))
+                    CurrLegend = ['Train loss', 'Val loss']
 
-            isLastLoop = (Epoch == self.Config.Args.epochs-1) and (i == len(TrainDataLoader)-1)
-            if (Epoch + 1) % self.SaveFrequency == 0 or isTerminateEarly or isLastLoop:
-                CheckpointDict = {
-                    'Name': self.Config.Args.expt_name,
-                    'ModelStateDict': self.state_dict(),
-                    'OptimizerStateDict': self.Optimizer.state_dict(),
-                    'LossHistory': self.LossHistory,
-                    'ValLossHistory': self.ValLossHistory,
-                    'Epoch': self.StartEpoch + Epoch + 1,
-                    'SavedTimeZ': ptUtils.getZuluTimeString(),
-                }
-                OutFilePath = ptUtils.savePyTorchCheckpoint(CheckpointDict, self.ExptDirPath)
-                ptUtils.saveLossesCurve(self.LossHistory, self.ValLossHistory, out_path=os.path.splitext(OutFilePath)[0] + '.jpg',
-                                        xlim = [0, int(self.Config.Args.epochs + self.StartEpoch)], legend=CurrLegend, title=self.Config.Args.expt_name)
-                # print('[ INFO ]: Checkpoint saved.')
-                print('*'*53) # Checkpoint saved. 50 + 3 characters [>]
+                # Always save checkpoint after an epoch. Will be replaced each epoch. This is independent of requested checkpointing
+                self.saveCheckpoint(Epoch, CurrLegend, TimeString='eot', PrintStr='~'*3)
 
-                if isTerminateEarly:
-                    break
+                isLastLoop = (Epoch == self.Config.Args.epochs-1) and (i == len(TrainDataLoader)-1)
+                if (Epoch + 1) % self.SaveFrequency == 0 or isTerminateEarly or isLastLoop:
+                    self.saveCheckpoint(Epoch, CurrLegend)
+                    if isTerminateEarly:
+                        break
+            except KeyboardInterrupt as e:
+                # Save checkpoint before exiting
+                print('\n[ WARN ]: KeyboardInterrupt detected. Saving checkpoint. {}'.format(e))
+                self.saveCheckpoint(Epoch, CurrLegend, TimeString='eot', PrintStr='$'*3)
+                break
 
         AllToc = ptUtils.getCurrentEpochTime()
         print('[ INFO ]: All done in {} s.'.format(ptUtils.getTimeDur((AllToc - AllTic) * 1e-6)))
+
+    def saveCheckpoint(self, Epoch, CurrLegend, TimeString='humanlocal', PrintStr='*'*3):
+        CheckpointDict = {
+            'Name': self.Config.Args.expt_name,
+            'ModelStateDict': self.state_dict(),
+            'OptimizerStateDict': self.Optimizer.state_dict(),
+            'LossHistory': self.LossHistory,
+            'ValLossHistory': self.ValLossHistory,
+            'Epoch': self.StartEpoch + Epoch + 1,
+            'SavedTimeZ': ptUtils.getZuluTimeString(),
+        }
+        OutFilePath = ptUtils.savePyTorchCheckpoint(CheckpointDict, self.ExptDirPath, TimeString=TimeString)
+        ptUtils.saveLossesCurve(self.LossHistory, self.ValLossHistory, out_path=os.path.splitext(OutFilePath)[0] + '.jpg',
+                                xlim = [0, int(self.Config.Args.epochs + self.StartEpoch)], legend=CurrLegend, title=self.Config.Args.expt_name)
+        # print('[ INFO ]: Checkpoint saved.')
+        print(PrintStr) # Checkpoint saved. 50 + 3 characters [>]
 
     def forward(self, x):
         print('[ WARN ]: This is an identity network. Override this in a derived class.')
