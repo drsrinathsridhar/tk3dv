@@ -226,12 +226,12 @@ class ptNet(nn.Module):
                     self.saveCheckpoint(Epoch, CurrLegend)
                     if isTerminateEarly:
                         break
-            except Exception as e:
-                print('\n[ WARN ]: Exception detected. Saving checkpoint. {}'.format(e))
+            except (KeyboardInterrupt, SystemExit):
+                print('\n[ INFO ]: KeyboardInterrupt detected. Saving checkpoint.')
                 self.saveCheckpoint(Epoch, CurrLegend, TimeString='eot', PrintStr='$'*3)
                 break
-            except KeyboardInterrupt as e:
-                print('\n[ WARN ]: KeyboardInterrupt detected. Saving checkpoint. {}'.format(e))
+            except Exception as e:
+                print('\n[ WARN ]: Exception detected. Saving checkpoint. {}'.format(e))
                 self.saveCheckpoint(Epoch, CurrLegend, TimeString='eot', PrintStr='$'*3)
                 break
 
