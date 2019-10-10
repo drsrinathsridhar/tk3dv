@@ -122,6 +122,18 @@ class GenericImageDataset(torch.utils.data.Dataset):
         return MaskedNOCS, Masked
 
     def __init__(self, root, train=True, download=True, transform=None, target_transform=None, imgSize=(640, 480), limit=None, loadMemory=False, loadLevel='all', FrameLoadStr=None, Required='VertexColors'):
+        self.FileName = 'camera_dataset_v1.zip'
+        self.DataURL = 'https://storage.googleapis.com/stanford_share/Datasets/camera_dataset_v1.zip'
+        self.FrameLoadStr = ['VertexColors', 'NOCS'] if FrameLoadStr is None else FrameLoadStr
+        self.LoadLevel = {}
+        self.LoadLevel['all'] = 1000
+        self.LoadLevel['gridsearch'] = 100
+        self.LoadLevel['debug'] = 10
+
+        self.init(root, train, download, transform, target_transform, imgSize, limit, loadMemory, loadLevel, self.FrameLoadStr, Required)
+        self.loadData()
+
+    def init(self, root, train=True, download=True, transform=None, target_transform=None, imgSize=(640, 480), limit=None, loadMemory=False, loadLevel='all', FrameLoadStr=None, Required='VertexColors'):
         self.DataDir = root
         self.isTrainData = train
         self.isDownload = download
@@ -129,24 +141,14 @@ class GenericImageDataset(torch.utils.data.Dataset):
         self.TargetTransform = target_transform
         self.ImageSize = imgSize
         self.LoadMemory = loadMemory
-
-        self.FileName = 'camera_dataset_v1.zip'
-        self.DataURL = 'https://storage.googleapis.com/stanford_share/Datasets/camera_dataset_v1.zip'
-        self.FrameLoadStr = ['VertexColors', 'NOCS'] if FrameLoadStr is None else FrameLoadStr
         self.Required = Required
         self.LoadType = loadLevel.lower() # 0 - All, 1 - GridSearch, 2 - Debug
-        self.LoadLevel = {}
-        self.LoadLevel['all'] = 1000
-        self.LoadLevel['gridsearch'] = 100
-        self.LoadLevel['debug'] = 10
         self.DataLimit = self.LoadLevel[self.LoadType] if limit is None else limit # limit takes precedence
 
         if self.Required not in self.FrameLoadStr:
             raise RuntimeError('FrameLoadStr should contain {}.'.format(self.Required))
 
         print('[ INFO ]: Loading dataset at level {} ({} samples).'.format(self.LoadType, self.LoadLevel[self.LoadType]))
-
-        self.loadData()
 
     def loadData(self):
         self.FrameFiles = {}
@@ -293,11 +295,11 @@ class GenericImageDataset(torch.utils.data.Dataset):
         return Color00, OutTupRGB, OutTupMask
 
     def saveItem(self, idx, OutPath='.'):
-        Color00, OutTupRGB, OutTupMask = Data.convertItem(idx, isMaskNOX=True)
+        Color00, OutTupRGB, OutTupMask = self.convertItem(idx, isMaskNOX=True)
         GenericImageDataset.saveData((Color00,) + OutTupRGB, OutPath)
 
-    def visualizeRandom(self, nSamples=10):
-        nColsPerSample = len(self.FrameLoadStr)
+    def visualizeRandom(self, nSamples=10, nColsPerSam=None):
+        nColsPerSample = len(self.FrameLoadStr) if nColsPerSam is None else nColsPerSam
         nCols = nColsPerSample
         nRows = min(nSamples, 10)
         nTot = nRows * nCols
