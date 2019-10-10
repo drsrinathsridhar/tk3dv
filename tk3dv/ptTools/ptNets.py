@@ -149,7 +149,7 @@ class ptNet(nn.Module):
             Toc = ptUtils.getCurrentEpochTime()
             Elapsed = math.floor((Toc - Tic) * 1e-6)
             done = int(50 * (i+1) / len(ValDataLoader))
-            sys.stdout.write(('\r[{}>{}] val loss - {:.16f}, elapsed - {}')
+            sys.stdout.write(('\r[{}>{}] val loss - {:.8f}, elapsed - {}')
                              .format('+' * done, '-' * (50 - done), np.mean(np.asarray(ValLosses)), ptUtils.getTimeDur(Elapsed)))
             sys.stdout.flush()
         sys.stdout.write('\n')
@@ -205,9 +205,9 @@ class ptNet(nn.Module):
                     TimePerBatch = (Toc - AllTic) / ((Epoch * len(TrainDataLoader)) + (i+1)) # Time per batch
                     ETA = math.floor(TimePerBatch * self.Config.Args.epochs * len(TrainDataLoader) * 1e-6)
                     done = int(50 * (i+1) / len(TrainDataLoader))
-                    sys.stdout.write(('\r[{}>{}] epoch - {}/{}, train loss - {:.16f} | epoch - {}, total - {} ETA - {} |')
-                                     .format('=' * done, '-' * (50 - done), self.StartEpoch + Epoch + 1, self.StartEpoch + self.Config.Args.epochs
-                                             , np.mean(np.asarray(EpochLosses)), ptUtils.getTimeDur(Elapsed), ptUtils.getTimeDur(TotalElapsed), ptUtils.getTimeDur(ETA-TotalElapsed)))
+                    ProgressStr = ('\r[{}>{}] epoch - {}/{}, train loss - {:.8f} | epoch - {}, total - {} ETA - {} |').format('=' * done, '-' * (50 - done), self.StartEpoch + Epoch + 1, self.StartEpoch + self.Config.Args.epochs
+                                             , np.mean(np.asarray(EpochLosses)), ptUtils.getTimeDur(Elapsed), ptUtils.getTimeDur(TotalElapsed), ptUtils.getTimeDur(ETA-TotalElapsed))
+                    sys.stdout.write(ProgressStr.ljust(150))
                     sys.stdout.flush()
                 sys.stdout.write('\n')
 
@@ -226,14 +226,17 @@ class ptNet(nn.Module):
                     self.saveCheckpoint(Epoch, CurrLegend)
                     if isTerminateEarly:
                         break
+            except Exception as e:
+                print('\n[ WARN ]: Exception detected. Saving checkpoint. {}'.format(e))
+                self.saveCheckpoint(Epoch, CurrLegend, TimeString='eot', PrintStr='$'*3)
+                break
             except KeyboardInterrupt as e:
-                # Save checkpoint before exiting
                 print('\n[ WARN ]: KeyboardInterrupt detected. Saving checkpoint. {}'.format(e))
                 self.saveCheckpoint(Epoch, CurrLegend, TimeString='eot', PrintStr='$'*3)
                 break
 
         AllToc = ptUtils.getCurrentEpochTime()
-        print('[ INFO ]: All done in {} s.'.format(ptUtils.getTimeDur((AllToc - AllTic) * 1e-6)))
+        print('[ INFO ]: All done in {}.'.format(ptUtils.getTimeDur((AllToc - AllTic) * 1e-6)))
 
     def saveCheckpoint(self, Epoch, CurrLegend, TimeString='humanlocal', PrintStr='*'*3):
         CheckpointDict = {
