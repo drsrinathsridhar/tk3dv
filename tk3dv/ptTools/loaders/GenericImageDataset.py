@@ -17,7 +17,7 @@ class GenericImageDataset(torch.utils.data.Dataset):
         Thresh = 0.7 # PARAM
         def __init__(self, Thresh=0.7, MaskWeight=0.7, ImWeight=0.3): # PARAM
             super().__init__()
-            self.MaskLoss = nn.BCELoss(size_average=True, reduce=True)
+            self.MaskLoss = nn.BCELoss(reduction='mean')
             self.Sigmoid = nn.Sigmoid()
             self.Thresh = Thresh
             self.MaskWeight = MaskWeight
