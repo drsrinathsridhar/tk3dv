@@ -139,19 +139,21 @@ def loadLatestPyTorchCheckpoint(InDir, CheckpointName='', map_location='cpu'):
     print('[ INFO ]: Loading checkpoint {}'.format(AllCheckpoints[-1]))
     return loadPyTorchCheckpoint(AllCheckpoints[-1])
 
-def normalizeInput(Image, format='pytorch'):
-    if 'pytorch' in format:
+def normalizeInput(Image, format='imagenet'):
+    # All pre-trained models expect input images normalized in the same way, i.e. mini-batches of 3-channel RGB images of shape (3 x H x W), where H and W are expected to be atleast 224.
+    # The images have to be loaded in to a range of [0, 1] and then normalized using mean=[0.485, 0.456, 0.406] and std=[0.229, 0.224, 0.225]
+    #
+    ImageN = Image / 255.0
+    if 'imagenet' in format:
         # Apply ImageNet batch normalization for input
         # https://discuss.pytorch.org/t/about-normalization-using-pre-trained-vgg16-networks/23560
-        # Assuming OpenCV image
-        ImageN = Image - np.array([0.485, 0.456, 0.406])
-        # Std: 0.229, 0.224, 0.225
-        ImageN[:, :, 0] = ImageN[:, :, 0] / 0.229
-        ImageN[:, :, 1] = ImageN[:, :, 1] / 0.224
-        ImageN[:, :, 2] = ImageN[:, :, 2] / 0.225
+        # Assuming torch image 3 x W x H
+        # mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
+        ImageN[0] = (ImageN[0] - 0.485 ) / 0.229
+        ImageN[1] = (ImageN[1] - 0.456 ) / 0.224
+        ImageN[2] = (ImageN[2] - 0.406 ) / 0.225
     else:
-        ImageN = Image
-        print('[ WARN ]: Input normalization implemented only for PyTorch.')
+        print('[ WARN ]: Input normalization implemented only for ImageNet.')
 
     return ImageN
 
