@@ -73,7 +73,6 @@ def getTimeString(TimeString='humanlocal'):
 
     return OTS
 
-
 def dhms(td):
     d, h, m = td.days, td.seconds//3600, (td.seconds//60)%60
     s = td.seconds - ( (h*3600) + (m*60) ) # td.seconds are the seconds remaining after days have been removed
@@ -139,6 +138,22 @@ def loadLatestPyTorchCheckpoint(InDir, CheckpointName='', map_location='cpu'):
 
     print('[ INFO ]: Loading checkpoint {}'.format(AllCheckpoints[-1]))
     return loadPyTorchCheckpoint(AllCheckpoints[-1])
+
+def normalizeInput(Image, format='pytorch'):
+    if 'pytorch' in format:
+        # Apply ImageNet batch normalization for input
+        # https://discuss.pytorch.org/t/about-normalization-using-pre-trained-vgg16-networks/23560
+        # Assuming OpenCV image
+        ImageN = Image - np.array([0.485, 0.456, 0.406])
+        # Std: 0.229, 0.224, 0.225
+        ImageN[:, :, 0] = ImageN[:, :, 0] / 0.229
+        ImageN[:, :, 1] = ImageN[:, :, 1] / 0.224
+        ImageN[:, :, 2] = ImageN[:, :, 2] / 0.225
+    else:
+        ImageN = Image
+        print('[ WARN ]: Input normalization implemented only for PyTorch.')
+
+    return ImageN
 
 def torch2np(ImageTorch):
     # OpenCV does [height, width, channels]

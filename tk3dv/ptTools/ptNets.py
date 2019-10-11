@@ -37,6 +37,9 @@ class ptNetExptConfig():
 
         self.Args, _ = self.Parser.parse_known_args(InputArgs)
 
+        if self.Args.expt_name is None:
+            raise RuntimeError('No experiment name (--expt-name) provided.')
+
         if self.Args.rel_output_dir is None and self.Args.output_dir is None:
             raise RuntimeError('One or both of --output-dir or --rel-output-dir is required.')
 
