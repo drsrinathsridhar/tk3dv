@@ -57,9 +57,10 @@ class NOCSMapModule(EaselModule):
             self.Intrinsics = ds.CameraIntrinsics()
             self.Intrinsics.init_with_file(self.Args.intrinsics)
             self.ImageSize = (self.Intrinsics.Width, self.Intrinsics.Height)
+            print('[ INFO ]: Intrinsics provided. Will re-size all images to', self.ImageSize)
         if self.Intrinsics is None:
-            self.ImageSize = (640, 480)
-            print('[ WARN ]: No intrinsics provided. Resizing and padding image to', self.ImageSize)
+            self.ImageSize = None
+            print('[ INFO ]: No intrinsics provided. Will use NOCS map size.')
 
         self.nNM = 0
         self.SSCtr = 0
@@ -195,6 +196,7 @@ class NOCSMapModule(EaselModule):
         print('[ INFO ]: Original input size ', Image.shape)
         Image = cv2.resize(Image, self.ImageSize, interpolation=cv2.INTER_NEAREST)
         print('[ INFO ]: Input resized to ', Image.shape)
+        sys.stdout.flush()
 
         return Image
 
@@ -212,12 +214,16 @@ class NOCSMapModule(EaselModule):
             NOCSMap = cv2.imread(NMF, -1)
             NOCSMap = NOCSMap[:, :, :3] # Ignore alpha if present
             NOCSMap = cv2.cvtColor(NOCSMap, cv2.COLOR_BGR2RGB) # IMPORTANT: OpenCV loads as BGR, so convert to RGB
-            NOCSMap = self.resizeAndPad(NOCSMap)
+            if self.Intrinsics is None:
+                self.ImageSize = (NOCSMap.shape[1], NOCSMap.shape[0])
+            else:
+                NOCSMap = self.resizeAndPad(NOCSMap)
             CFIm = None
             if CF is not None:
                 CFIm = cv2.imread(CF)
                 CFIm = cv2.cvtColor(CFIm, cv2.COLOR_BGR2RGB) # IMPORTANT: OpenCV loads as BGR, so convert to RGB
-                CFIm = cv2.resize(CFIm, self.ImageSize, interpolation=cv2.INTER_NEAREST)
+                if CFIm.shape != NOCSMap.shape: # Re-size only if not the same size as NOCSMap
+                    CFIm = cv2.resize(CFIm, (NOCSMap.shape[1], NOCSMap.shape[0]), interpolation=cv2.INTER_CUBIC) # Ok to use cubic interpolation for RGB
             NOCS = ds.NOCSMap(NOCSMap, RGB=CFIm)
             self.NOCSMaps.append(NOCSMap)
             self.NOCS.append(NOCS)
