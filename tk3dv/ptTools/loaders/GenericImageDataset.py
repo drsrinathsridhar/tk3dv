@@ -121,7 +121,7 @@ class GenericImageDataset(torch.utils.data.Dataset):
 
         return MaskedNOCS, Masked
 
-    def __init__(self, root, train=True, download=True, transform=None, target_transform=None, imgSize=(640, 480), limit=None, loadMemory=False, FrameLoadStr=None, Required='VertexColors'):
+    def __init__(self, root, train=True, download=True, transform=None, target_transform=None, imgSize=(640, 480), limit=100, loadMemory=False, FrameLoadStr=None, Required='VertexColors'):
         self.FileName = 'camera_dataset_v1.zip'
         self.DataURL = 'https://storage.googleapis.com/stanford_share/Datasets/camera_dataset_v1.zip'
         self.FrameLoadStr = ['VertexColors', 'NOCS'] if FrameLoadStr is None else FrameLoadStr
@@ -138,7 +138,9 @@ class GenericImageDataset(torch.utils.data.Dataset):
         self.ImageSize = imgSize
         self.LoadMemory = loadMemory
         self.Required = Required
-        self.DataLimit = limit # limit takes precedence. It's in percentage
+        if limit <= 0.0 or limit > 100.0:
+            raise RuntimeError('Data limit percent has to be >0% and <=100%')
+        self.DataLimit = limit
 
         if self.Required not in self.FrameLoadStr:
             raise RuntimeError('FrameLoadStr should contain {}.'.format(self.Required))
