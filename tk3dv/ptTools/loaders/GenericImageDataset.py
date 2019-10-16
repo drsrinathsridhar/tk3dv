@@ -3,7 +3,7 @@ import numpy as np
 import torch.nn.functional as F
 import json
 import matplotlib.pyplot as plt
-import os, sys, argparse, zipfile, glob, random, pickle, cv2
+import os, sys, argparse, zipfile, glob, random, pickle, cv2, math
 from itertools import groupby
 
 FileDirPath = os.path.dirname(os.path.realpath(__file__))
@@ -121,19 +121,15 @@ class GenericImageDataset(torch.utils.data.Dataset):
 
         return MaskedNOCS, Masked
 
-    def __init__(self, root, train=True, download=True, transform=None, target_transform=None, imgSize=(640, 480), limit=None, loadMemory=False, loadLevel='all', FrameLoadStr=None, Required='VertexColors'):
+    def __init__(self, root, train=True, download=True, transform=None, target_transform=None, imgSize=(640, 480), limit=None, loadMemory=False, FrameLoadStr=None, Required='VertexColors'):
         self.FileName = 'camera_dataset_v1.zip'
         self.DataURL = 'https://storage.googleapis.com/stanford_share/Datasets/camera_dataset_v1.zip'
         self.FrameLoadStr = ['VertexColors', 'NOCS'] if FrameLoadStr is None else FrameLoadStr
-        self.LoadLevel = {}
-        self.LoadLevel['all'] = 1000
-        self.LoadLevel['gridsearch'] = 100
-        self.LoadLevel['debug'] = 10
 
-        self.init(root, train, download, transform, target_transform, imgSize, limit, loadMemory, loadLevel, self.FrameLoadStr, Required)
+        self.init(root, train, download, transform, target_transform, imgSize, limit, loadMemory, self.FrameLoadStr, Required)
         self.loadData()
 
-    def init(self, root, train=True, download=True, transform=None, target_transform=None, imgSize=(640, 480), limit=None, loadMemory=False, loadLevel='all', FrameLoadStr=None, Required='VertexColors'):
+    def init(self, root, train=True, download=True, transform=None, target_transform=None, imgSize=(640, 480), limit=100, loadMemory=False, FrameLoadStr=None, Required='VertexColors'):
         self.DataDir = root
         self.isTrainData = train
         self.isDownload = download
@@ -142,13 +138,10 @@ class GenericImageDataset(torch.utils.data.Dataset):
         self.ImageSize = imgSize
         self.LoadMemory = loadMemory
         self.Required = Required
-        self.LoadType = loadLevel.lower() # 0 - All, 1 - GridSearch, 2 - Debug
-        self.DataLimit = self.LoadLevel[self.LoadType] if limit is None else limit # limit takes precedence
+        self.DataLimit = limit # limit takes precedence. It's in percentage
 
         if self.Required not in self.FrameLoadStr:
             raise RuntimeError('FrameLoadStr should contain {}.'.format(self.Required))
-
-        print('[ INFO ]: Loading dataset at level {} ({} samples).'.format(self.LoadType, self.LoadLevel[self.LoadType]))
 
     def loadData(self):
         self.FrameFiles = {}
@@ -203,8 +196,9 @@ class GenericImageDataset(torch.utils.data.Dataset):
         if len(set(FrameFilesLengths)) != 1:
             raise RuntimeError('Data corrupted. Sizes do not match', FrameFilesLengths)
 
-        print('[ INFO ]: Found {} items in dataset.'.format(len(self)))
-        DatasetLength = self.DataLimit
+        TotSize = len(self)
+        print('[ INFO ]: Found {} items in dataset.'.format(TotSize))
+        DatasetLength = math.ceil((self.DataLimit / 100) * TotSize)
 
         if DatasetLength is None:
             print('[ INFO ]: Loading all items.')
@@ -336,13 +330,13 @@ Parser.add_argument('-d', '--data-dir', help='Specify the location of the direct
 if __name__ == '__main__':
     Args, _ = Parser.parse_known_args()
 
-    Data = GenericImageDataset(root=Args.data_dir, train=True, download=True, imgSize=(320, 240), loadLevel='all')#, FrameLoadStr=['color00', 'normals00', 'nox00', 'pnnocs00', 'uv00', 'camera'])
+    Data = GenericImageDataset(root=Args.data_dir, train=True, download=True, imgSize=(320, 240))#, FrameLoadStr=['color00', 'normals00', 'nox00', 'pnnocs00', 'uv00', 'camera'])
     # Data.saveItem(random.randint(0, len(Data)))
     Data.visualizeRandom(10)
     # exit()
 
     LossUnitTest = GenericImageDataset.L2MaskLoss(0.7)
-    DataLoader = torch.utils.data.DataLoader(Data, batch_size=4, shuffle=True, num_workers=1)
+    DataLoader = torch.utils.data.DataLoader(Data, batch_size=4, shuffle=True, num_workers=0)
     for i, (Data, Targets) in enumerate(DataLoader, 0):  # Get each batch
         # DataTD = ptUtils.sendToDevice(Targets, 'cpu')
         # print('Data size:', Data.size())

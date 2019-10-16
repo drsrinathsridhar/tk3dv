@@ -11,13 +11,20 @@ sys.path.append(os.path.join(FileDirPath, '.'))
 
 import ptUtils
 
+def RestrictedFloat_N10_100(x):
+    x = float(x)
+    MinMax = [-10.0, 100.0]
+    if x < MinMax[0] or x > MinMax[1]:
+        raise argparse.ArgumentTypeError('{} not in range [{}, {}]'.format(x, MinMax[0], MinMax[1]))
+    return x
+
 class ptNetExptConfig():
     def __init__(self, InputArgs=None, isPrint=True):
         self.Parser = argparse.ArgumentParser(description='Parse arguments for a PyTorch neural network.', fromfile_prefix_chars='@')
 
         # Search params
         self.Parser.add_argument('--learning-rate', help='Choose the learning rate.', required=False, default=0.001,
-                            type=ptUtils.restricted_float)
+                            type=RestrictedFloat_N10_100)
         self.Parser.add_argument('--batch-size', help='Choose mini-batch size.', choices=range(1, 4096), metavar='1..4096',
                             required=False, default=128, type=int)
 

@@ -38,12 +38,23 @@ class ptLogger():
         if self.File is not None:
             self.File.flush()
 
-# Utilities for PyTorch
-def restricted_float(x):
-    x = float(x)
-    if x < -1.0 or x > 10.0:
-        raise argparse.ArgumentTypeError('%r not in range [-1.0, 10.0]'%(x,))
-    return x
+def getFileNamesFromArgList(InputList):
+    FileNames = []
+    # Check if InputList is a directory
+    if len(InputList) == 1 and os.path.isdir(InputList[0]):
+        # Glob all images png, jpg
+        FileNames = glob.glob(os.path.join(InputList[0], '*.png'), recursive=False)
+        FileNames.extend(glob.glob(os.path.join(InputList[0], '*.jpg'), recursive=False))
+    else:
+        for File in InputList:
+            if '*' in File:
+                GlobFiles = glob.glob(File, recursive=False)
+                GlobFiles.sort()
+                FileNames.extend(GlobFiles)
+            else:
+                FileNames.append(File)
+
+    return FileNames
 
 def getCurrentEpochTime():
     return int((datetime.utcnow() - datetime(1970, 1, 1)).total_seconds() * 1e6)
