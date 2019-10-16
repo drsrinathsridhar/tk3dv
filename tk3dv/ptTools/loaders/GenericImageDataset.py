@@ -138,6 +138,7 @@ class GenericImageDataset(torch.utils.data.Dataset):
         self.ImageSize = imgSize
         self.LoadMemory = loadMemory
         self.Required = Required
+        self.FrameLoadStr = FrameLoadStr
         if limit <= 0.0 or limit > 100.0:
             raise RuntimeError('Data limit percent has to be >0% and <=100%')
         self.DataLimit = limit
