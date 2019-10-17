@@ -41,7 +41,7 @@ class GLViewer(QOpenGLWidget):
         self.initCameras()
 
     def initCameras(self):
-        self.nCameras = 5
+        self.nCameras = 3
         self.CamFileName = os.path.join(tempfile.gettempdir(), 'pyEasel_render_cams.npz')
         self.isRotateCameraStack = [False] * self.nCameras
         self.RotateSpeedStack = np.ones([self.nCameras,]) * 0.05
