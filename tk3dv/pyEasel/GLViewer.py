@@ -7,8 +7,7 @@ from PyQt5.QtWidgets import QOpenGLWidget, QSizePolicy, QPushButton, QHBoxLayout
 import PyQt5.QtCore as QtCore
 
 import numpy as np
-import math
-import time
+import math, tempfile, os
 
 from common import drawing, utilities
 
@@ -39,17 +38,17 @@ class GLViewer(QOpenGLWidget):
         self.SceneUserLimit = self.SceneExtents / 100.0
         self.LastMouseMove = QPoint(0, 0)
 
-        self.nCameras = 3
+        self.initCameras()
 
+    def initCameras(self):
+        self.nCameras = 5
+        self.CamFileName = os.path.join(tempfile.gettempdir(), 'pyEasel_render_cams.npz')
         self.isRotateCameraStack = [False] * self.nCameras
         self.RotateSpeedStack = np.ones([self.nCameras,]) * 0.05
         self.RotateSpeedUpdateStack = np.ones([self.nCameras,]) * 0.02
 
         print('[ INFO ]: pyEasel can render with {} cameras.'.format(self.nCameras))
 
-        self.resetCamera()
-
-    def resetCamera(self):
         self.UpDir = np.array([0.0, 1.0, 0.0])
 
         N = self.nCameras
@@ -68,6 +67,30 @@ class GLViewer(QOpenGLWidget):
             self.PitchStack[i] += i * 25.0
 
         self.activeCamStackIdx = 0
+
+        if os.path.exists(self.CamFileName) == False:
+            self.saveCameras()
+        else:
+            self.loadCameras()
+
+    def saveCameras(self):
+        np.savez(self.CamFileName, ps=self.PitchStack, rs=self.RollStack
+                 , ys=self.YawStack, ds=self.DistanceStack, fs=self.FOVYStack, ts=self.TranslationStack)
+        print('[ INFO ]: Saved pyEasel cameras to {}'.format(self.CamFileName))
+
+    def loadCameras(self):
+        if os.path.exists(self.CamFileName):
+            CamData = np.load(self.CamFileName)
+            self.PitchStack = CamData['ps']
+            self.RollStack = CamData['rs']
+            self.YawStack = CamData['ys']
+            self.DistanceStack = CamData['ds']
+            self.FOVYStack = CamData['fs']
+            self.TranslationStack = CamData['ts']
+            self.nCameras = self.TranslationStack.shape[0]
+            print('[ INFO ]: Loaded pyEasel cameras from {}'.format(self.CamFileName))
+        else:
+            print('[ WARN ]: No pyEasel cameras found in {}. Please save first using Ctrl+S'.format(self.CamFileName))
 
     def clearColor(self):
         if self.isDarkMode:
@@ -229,6 +252,13 @@ class GLViewer(QOpenGLWidget):
             if (a0.key() == QtCore.Qt.Key_Comma):
                 if self.RotateSpeedStack[self.activeCamStackIdx] > self.RotateSpeedUpdateStack[self.activeCamStackIdx]:
                     self.RotateSpeedStack[self.activeCamStackIdx] -= self.RotateSpeedUpdateStack[self.activeCamStackIdx]
+            if(a0.key() == QtCore.Qt.Key_S):
+                self.saveCameras()
+                self.update()
+            if(a0.key() == QtCore.Qt.Key_L):
+                self.loadCameras()
+                self.update()
+
 
         if(a0.key() == QtCore.Qt.Key_Escape):
             QtCore.QCoreApplication.quit()
