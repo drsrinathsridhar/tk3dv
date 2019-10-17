@@ -59,8 +59,8 @@ class Easel(glv.GLViewer):
 
         self.FPS = 1e6 / (ElapsedTime)
 
-        if self.isRotateCamera:
-            self.Yaw += math.radians(self.RotateSpeed)
+        if self.isRotateCameraStack[self.activeCamStackIdx]:
+            self.YawStack[self.activeCamStackIdx] += math.radians(self.RotateSpeedStack[self.activeCamStackIdx])
         if self.isUpdateEveryStep:
             self.update() # A bit hacky to force draw call after step
 

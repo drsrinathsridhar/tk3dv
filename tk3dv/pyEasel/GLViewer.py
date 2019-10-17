@@ -31,10 +31,7 @@ class GLViewer(QOpenGLWidget):
         self.isRenderPlane = False
         self.isRenderPlaneWire = False
         self.isRenderAxis = True
-        self.isRotateCamera = False
         self.isUpdateEveryStep = False
-        self.RotateSpeed = 0.05
-        self.RotateSpeedUpdate = 0.02
         self.isDarkMode = False
 
         self.SceneExtents = 1000000.0
@@ -42,32 +39,35 @@ class GLViewer(QOpenGLWidget):
         self.SceneUserLimit = self.SceneExtents / 100.0
         self.LastMouseMove = QPoint(0, 0)
 
+        self.nCameras = 3
+
+        self.isRotateCameraStack = [False] * self.nCameras
+        self.RotateSpeedStack = np.ones([self.nCameras,]) * 0.05
+        self.RotateSpeedUpdateStack = np.ones([self.nCameras,]) * 0.02
+
+        print('[ INFO ]: pyEasel can render with {} cameras.'.format(self.nCameras))
+
         self.resetCamera()
 
     def resetCamera(self):
-        self.CameraPosition = np.array([0.0, 0.0, 100.0])
-        self.LookAt = np.array([0.0, 0.0, 0.0])
         self.UpDir = np.array([0.0, 1.0, 0.0])
 
-        self.CamPosStack = np.zeros([0, 3])
-        self.CamPosStack = np.vstack([self.CamPosStack, self.CameraPosition])
-        self.CamPosStack = np.vstack([self.CamPosStack, self.CameraPosition + np.array([100, 100, 0])])
-        self.CamPosStack = np.vstack([self.CamPosStack, self.CameraPosition + np.array([300, 100, 0])])
+        N = self.nCameras
+        self.CamPosStack = np.zeros([N, 3])
+        self.LAtStack = np.zeros([N, 3])
+        self.PitchStack = np.zeros([N,])
+        self.RollStack = np.zeros([N,])
+        self.YawStack = np.zeros([N,])
+        self.DistanceStack = np.ones([N,]) * 500.0
+        self.FOVYStack = np.ones([N,]) * 75.0 # Degrees
+        self.TranslationStack = np.zeros([N, 3])
 
-        self.LAtStack = np.zeros([0, 3])
-        self.LAtStack = np.vstack([self.LAtStack, self.LookAt])
-        self.LAtStack = np.vstack([self.LAtStack, self.LookAt])
-        self.LAtStack = np.vstack([self.LAtStack, self.LookAt])
+        for i in range(0, N):
+            self.DistanceStack[i] += i * 20.0
+            self.YawStack[i] += i * 45.0
+            self.PitchStack[i] += i * 25.0
 
         self.activeCamStackIdx = 0
-
-        self.Pitch = 0.0 # Radians
-        self.Roll = 0.0
-        self.Yaw = 0.0
-        self.Distance = 100.0
-        self.FOVY = 75.0 # Degrees
-
-        self.Translation = np.array([0.0, 0.0, 0.0])
 
     def clearColor(self):
         if self.isDarkMode:
@@ -93,13 +93,13 @@ class GLViewer(QOpenGLWidget):
         gl.glMatrixMode(gl.GL_PROJECTION)
         gl.glLoadIdentity()
 
-        glu.gluPerspective(self.FOVY, self.Width / self.Height, 1, 50000)
+        glu.gluPerspective(self.FOVYStack[self.activeCamStackIdx], self.Width / self.Height, 1, 50000)
 
         gl.glMatrixMode(gl.GL_MODELVIEW)
         gl.glLoadIdentity()
 
-        glu.gluLookAt(self.CameraPosition[0], self.CameraPosition[1], self.CameraPosition[2]
-                      , self.LookAt[0], self.LookAt[1], self.LookAt[2]
+        glu.gluLookAt(self.CamPosStack[self.activeCamStackIdx][0], self.CamPosStack[self.activeCamStackIdx][1], self.CamPosStack[self.activeCamStackIdx][2]
+                      , self.LAtStack[self.activeCamStackIdx][0], self.LAtStack[self.activeCamStackIdx][1], self.LAtStack[self.activeCamStackIdx][2]
                       , self.UpDir[0], self.UpDir[1], self.UpDir[2])
 
         gl.glMatrixMode(gl.GL_MODELVIEW)
@@ -120,21 +120,19 @@ class GLViewer(QOpenGLWidget):
                          [2 * (bd + ac), 2 * (cd - ab), aa + dd - bb - cc]])
 
     def makeRotationMatrix(self):
-        Rz = self.rotation_matrix(np.array([0, 0, 1]), self.Roll)
-        Ry = self.rotation_matrix(Rz.dot(np.array([0, 1, 0])), self.Yaw)
-        Rx = self.rotation_matrix(Ry.dot(np.array([1, 0, 0])), self.Pitch)
+        Rz = self.rotation_matrix(np.array([0, 0, 1]), self.RollStack[self.activeCamStackIdx])
+        Ry = self.rotation_matrix(Rz.dot(np.array([0, 1, 0])), self.YawStack[self.activeCamStackIdx])
+        Rx = self.rotation_matrix(Ry.dot(np.array([1, 0, 0])), self.PitchStack[self.activeCamStackIdx])
         RotationMatrix = Rx @ Ry @ Rz
 
         return RotationMatrix
 
     def updateState(self):
         RotMat = self.makeRotationMatrix()
-        self.CamPosStack[0] = RotMat.dot(np.array([0, 0, self.Distance])) + self.Translation
-        self.LAtStack[0] = RotMat.dot(np.array([0, 0, 0])) + self.Translation
-        self.UpDir = RotMat.dot(np.array([0, 1, 0]))
 
-        self.CameraPosition = self.CamPosStack[self.activeCamStackIdx]
-        self.LookAt = self.LAtStack[self.activeCamStackIdx]
+        self.CamPosStack[self.activeCamStackIdx] = RotMat.dot(np.array([0, 0, self.DistanceStack[self.activeCamStackIdx]])) + self.TranslationStack[self.activeCamStackIdx]
+        self.LAtStack[self.activeCamStackIdx] = RotMat.dot(np.array([0, 0, 0])) + self.TranslationStack[self.activeCamStackIdx]
+        self.UpDir = RotMat.dot(np.array([0, 1, 0]))
 
         self.updateCamera()
 
@@ -218,18 +216,19 @@ class GLViewer(QOpenGLWidget):
                 self.clearColor()
                 self.update()
             if (a0.key() == QtCore.Qt.Key_1):
-                self.activeCamStackIdx = (self.activeCamStackIdx+1)%self.CamPosStack.shape[0]
+                self.activeCamStackIdx = (self.activeCamStackIdx+1)%self.nCameras
+                print('[ INFO ]: pyEasel rendering with camera {}.'.format(self.activeCamStackIdx))
                 self.updateState()
             if (a0.key() == QtCore.Qt.Key_R):
-                self.isRotateCamera = not self.isRotateCamera
-                self.isUpdateEveryStep = self.isRotateCamera
+                self.isRotateCameraStack[self.activeCamStackIdx] = not self.isRotateCameraStack[self.activeCamStackIdx]
+                self.isUpdateEveryStep = self.isRotateCameraStack[self.activeCamStackIdx]
                 self.update()
             if (a0.key() == QtCore.Qt.Key_Period):
-                if self.RotateSpeed < (1.0 - self.RotateSpeedUpdate):
-                    self.RotateSpeed += self.RotateSpeedUpdate
+                if self.RotateSpeedStack[self.activeCamStackIdx] < (1.0 - self.RotateSpeedUpdateStack[self.activeCamStackIdx]):
+                    self.RotateSpeedStack[self.activeCamStackIdx] += self.RotateSpeedUpdateStack[self.activeCamStackIdx]
             if (a0.key() == QtCore.Qt.Key_Comma):
-                if self.RotateSpeed > self.RotateSpeedUpdate:
-                    self.RotateSpeed -= self.RotateSpeedUpdate
+                if self.RotateSpeedStack[self.activeCamStackIdx] > self.RotateSpeedUpdateStack[self.activeCamStackIdx]:
+                    self.RotateSpeedStack[self.activeCamStackIdx] -= self.RotateSpeedUpdateStack[self.activeCamStackIdx]
 
         if(a0.key() == QtCore.Qt.Key_Escape):
             QtCore.QCoreApplication.quit()
@@ -246,11 +245,11 @@ class GLViewer(QOpenGLWidget):
         dy = delta * (a0.y() - self.LastMouseMove.y())
 
         if(a0.buttons() & QtCore.Qt.LeftButton):
-            self.Yaw -= dx * (math.radians(30))
-            self.Pitch -= dy * (math.radians(30))
+            self.YawStack[self.activeCamStackIdx] -= dx * (math.radians(30))
+            self.PitchStack[self.activeCamStackIdx] -= dy * (math.radians(30))
         elif(a0.buttons() & QtCore.Qt.RightButton):
             RotationMatrix = self.makeRotationMatrix()
-            self.Translation += RotationMatrix.dot(np.array([-dx, dy, 0])) * 300
+            self.TranslationStack[self.activeCamStackIdx] += RotationMatrix.dot(np.array([-dx, dy, 0])) * 300
 
         self.LastMouseMove = a0.pos()
 
@@ -259,13 +258,13 @@ class GLViewer(QOpenGLWidget):
     def wheelEvent(self, a0: QWheelEvent):
         if(a0.modifiers() == QtCore.Qt.NoModifier):
             dz = a0.angleDelta().y() * 0.01
-            self.Distance *= math.pow(1.2, -dz)
-            self.Distance = self.SceneUserLimit if (self.Distance > self.SceneUserLimit) else self.Distance
+            self.DistanceStack[self.activeCamStackIdx] *= math.pow(1.2, -dz)
+            self.DistanceStack[self.activeCamStackIdx] = self.SceneUserLimit if (self.DistanceStack[self.activeCamStackIdx] > self.SceneUserLimit) else self.DistanceStack[self.activeCamStackIdx]
 
         if (a0.modifiers() == QtCore.Qt.ControlModifier):
             dz = a0.angleDelta().y() * 0.005
-            Val = self.FOVY * math.pow(1.2, -dz)
+            Val = self.FOVYStack[self.activeCamStackIdx] * math.pow(1.2, -dz)
             if Val > 1 and Val < 360:
-                self.FOVY = Val
+                self.FOVYStack[self.activeCamStackIdx] = Val
 
         self.update()
