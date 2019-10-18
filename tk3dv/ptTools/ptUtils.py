@@ -105,7 +105,7 @@ def getTimeDur(seconds):
 
 def downloadFile(url, filename):
     with open(expandTilde(filename), 'wb') as f:
-        response = requests.get(url, stream=True)
+        response = requests.get(url, stream=True, verify=False)
         total = response.headers.get('content-length')
 
         if total is None:
