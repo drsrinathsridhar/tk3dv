@@ -74,7 +74,7 @@ class GenericImageDataset(torch.utils.data.Dataset):
             return Loss
 
     @staticmethod
-    def imread_rgb_torch(Path, Size=None): # Use only for loading RGB images
+    def imread_rgb_torch(Path, Size=None, interp=cv2.INTER_NEAREST): # Use only for loading RGB images
         ImageCV = cv2.imread(Path, -1)
         # Discard 4th channel since we are loading as RGB
         if ImageCV.shape[-1] != 3:
@@ -82,7 +82,7 @@ class GenericImageDataset(torch.utils.data.Dataset):
 
         ImageCV = cv2.cvtColor(ImageCV, cv2.COLOR_BGR2RGB)
         if Size is not None:
-            ImageCV = cv2.resize(ImageCV, dsize=Size, interpolation=cv2.INTER_NEAREST)
+            ImageCV = cv2.resize(ImageCV, dsize=Size, interpolation=interp)
         Image = ptUtils.np2torch(ImageCV) # Range: 0-255
 
         return Image
