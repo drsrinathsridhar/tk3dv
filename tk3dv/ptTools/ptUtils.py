@@ -6,6 +6,7 @@ from palettable.tableau import Tableau_20, BlueRed_12, ColorBlind_10, GreenOrang
 from palettable.cartocolors.diverging import Earth_2
 import matplotlib.pyplot as plt
 import logging
+import GPUtil
 
 # ptToolsLogger = logging.getLogger(__name__)
 # ptToolsLogger.propagate = False
@@ -292,17 +293,24 @@ def makeDir(Path):
     if os.path.exists(Path) == False:
         os.makedirs(Path)
 
-def setupGPUs(RequestedGPUList):
+def setupGPUs(RequestedGPUList=None, maxLoad=0.1, maxMemory=0.1):
     if torch.cuda.is_available():
-        DeviceList = RequestedGPUList
-        MainGPUID = DeviceList[0]
-        nDevs = torch.cuda.device_count()
-        AvailableDevList = [i for i in range(0, nDevs)]  # All GPUs
-        if len(DeviceList) == 1 and MainGPUID < 0:
-            DeviceList = AvailableDevList
-        if set(DeviceList).issubset(set(AvailableDevList)) == False:
-            raise RuntimeError('Unable to find requested devices {}.'.format(DeviceList))
+        if RequestedGPUList is not None:
+            DeviceList = RequestedGPUList
+            MainGPUID = DeviceList[0]
+            nDevs = torch.cuda.device_count()
+            AvailableDevList = [i for i in range(0, nDevs)]  # All GPUs
+            if len(DeviceList) == 1 and MainGPUID < 0:
+                DeviceList = AvailableDevList
+            if set(DeviceList).issubset(set(AvailableDevList)) == False:
+                raise RuntimeError('Unable to find requested devices {}.'.format(DeviceList))
+        else:
+            GPUs = GPUtil.getGPUs()
+            DeviceList = GPUtil.getAvailability(GPUs, maxLoad=maxLoad, maxMemory=maxMemory, includeNan=False, excludeID=[], excludeUUID=[])
+            MainGPUID = DeviceList[0]
+            print('[ INFO ]: Automatically detected GPUs ({}) with load < {} and memory < {}.'.format(DeviceList, maxLoad, maxMemory))
     else:
+        print('[ WARN ]: No GPUs available. Will use device ID 0 which will default to CPU.')
         DeviceList = [0]
         MainGPUID = 0
 
