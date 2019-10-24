@@ -308,9 +308,9 @@ def setupGPUs(RequestedGPUList=None, maxLoad=0.1, maxMemory=0.1):
             GPUs = GPUtil.getGPUs()
             FreeGPUs = GPUtil.getAvailability(GPUs, maxLoad=maxLoad, maxMemory=maxMemory, includeNan=False, excludeID=[], excludeUUID=[])
             DeviceList = []
-            for GPUID, FreeID in zip(GPUs, FreeGPUs):
+            for GPU, FreeID in zip(GPUs, FreeGPUs):
                 if FreeID > 0:
-                    DeviceList.append(GPUID)
+                    DeviceList.append(GPU.id)
             if len(DeviceList) <= 0:
                 raise RuntimeError('No GPUs with with load < {} and memory < {} found. Call with explicit GPU list to override.'.format(maxLoad, maxMemory))
             print('[ INFO ]: Automatically detected GPUs ({}) with load < {} and memory < {}.'.format(DeviceList, maxLoad, maxMemory))
