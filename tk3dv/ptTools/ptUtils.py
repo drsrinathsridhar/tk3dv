@@ -307,8 +307,10 @@ def setupGPUs(RequestedGPUList=None, maxLoad=0.1, maxMemory=0.1):
         else:
             GPUs = GPUtil.getGPUs()
             DeviceList = GPUtil.getAvailability(GPUs, maxLoad=maxLoad, maxMemory=maxMemory, includeNan=False, excludeID=[], excludeUUID=[])
-            MainGPUID = DeviceList[0]
+            if len(DeviceList) <= 0:
+                raise RuntimeError('No GPUs with with load < {} and memory < {} found. Call with explicit GPU list to override.'.format(maxLoad, maxMemory))
             print('[ INFO ]: Automatically detected GPUs ({}) with load < {} and memory < {}.'.format(DeviceList, maxLoad, maxMemory))
+            MainGPUID = DeviceList[0]
     else:
         print('[ WARN ]: No GPUs available. Will use device ID 0 which will default to CPU.')
         DeviceList = [0]
