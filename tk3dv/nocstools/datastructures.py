@@ -155,6 +155,11 @@ class NOCSMap(PointSet3D):
 
         self.addAll(ValidPoints, Colors=RGBColors)
 
+    def updateColors(self, RGB):
+        self.Colors = RGB[self.ValidIdx[0], self.ValidIdx[1]] / 255
+        self.PixVC = np.hstack([self.Colors, np.ones((self.Points.shape[0], 1))])
+        self.update()
+
     def createConnectivity(self):
         if self.ValidIdx is None or self.NOCSMap is None:
             print('[ WARN ]: Call createNOCSFromNM before trying to create connectivty.')
@@ -473,6 +478,14 @@ class CameraIntrinsics():
         if fromFile is not None:
             self.init_with_file(fromFile)
 
+    def __str__(self):
+        OutStr = ''
+        OutStr += '[ INFO ]: Intrinsics:\n' + np.array2string(self.Matrix) + '\n'
+        OutStr += '[ INFO ]: width, height - {}, {}.\n'.format(self.Width, self.Height)
+        OutStr += '[ INFO ]: Distortion coefficients:' + np.array2string(self.DistCoeffs) + '\n'
+
+        return OutStr
+
     def init_with_file(self, FileName):
         with open(FileName) as f:
             content = f.readlines()
@@ -513,11 +526,6 @@ class CameraIntrinsics():
                 for i in range(0, 8):
                     self.DistCoeffs[i] = float(Params[6+i])
 
-
-        print('[ INFO ]: Using intrinsics:\n', self.Matrix)
-        print('[ INFO ]: Using width, height - {}, {}.'.format(self.Width, self.Height))
-        print('[ INFO ]: Using distortion coefficients:', self.DistCoeffs)
-
 class CameraExtrinsics():
     def __init__(self, rotation=np.identity(3), translation=np.array([0, 0, 0]), fromFile=None):
         self.Rotation = rotation
@@ -525,6 +533,13 @@ class CameraExtrinsics():
 
         if fromFile is not None:
             self.deserialize(fromFile)
+
+    def __str__(self):
+        OutStr = ''
+        OutStr += '[ INFO ]: Rotation:\n' + np.array2string(self.Rotation) + '\n'
+        OutStr += '[ INFO ]: Translation:\n' + np.array2string(self.Translation) + '\n'
+
+        return OutStr
 
     def serialize(self, OutFile):
         print('[ WARN ]: CameraExtrinsics.serialize() not yet implemented.')
@@ -550,6 +565,9 @@ class Camera():
     def __init__(self, Extrinsics=CameraExtrinsics(), Intrinsics=CameraIntrinsics()):
         self.Extrinsics = Extrinsics
         self.Intrinsics = Intrinsics
+
+    def __str__(self):
+        return self.Intrinsics.__str__() + '\n' + self.Extrinsics.__str__()
 
     def draw(self, Color=None, isF = False, Length=5.0):
         gl.glPushMatrix()
