@@ -14,7 +14,7 @@ class Easel(glv.GLViewer):
         super().__init__()
         self.setWindowTitle('pyEasel')
         self.isRenderPlane = False
-        self.isRenderAxis = True
+        self.isRenderAxis = False
 
         self.Modules = []
         self.Modules.extend(OtherModules)
