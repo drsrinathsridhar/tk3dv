@@ -29,7 +29,7 @@ class GLViewer(QOpenGLWidget):
         # self.setMinimumSize(640, 480)
         self.isRenderPlane = False
         self.isRenderPlaneWire = False
-        self.isRenderAxis = True
+        self.isRenderAxis = False
         self.isUpdateEveryStep = False
         self.isDarkMode = False
 
