@@ -1,6 +1,8 @@
 import OpenGL.GL as gl
+import OpenGL.GLU as glu
 import OpenGL.arrays.vbo as glvbo
 import numpy as np
+import math, sys
 
 def drawAxes(Length=100.0, LineWidth=5.0, Color=None):
     gl.glMatrixMode(gl.GL_MODELVIEW)
@@ -95,6 +97,72 @@ def activateCamera(Intrinsics, ImageShape):
     # Adding this rotation makes it right
     gl.glRotatef(180.0, 0.0, 0.0, 1.0)
 
+
+QUADRIC = glu.gluNewQuadric()
+# glu.gluDeleteQuadric(QUADRIC)
+
+def drawSolidSphere(radius=1.0, slices=16, stacks=16, Color=None):
+    if (Color != None):
+        gl.glEnable(gl.GL_DEPTH_TEST)
+        gl.glHint(gl.GL_PERSPECTIVE_CORRECTION_HINT, gl.GL_NICEST)
+        gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA) # Orig
+        gl.glEnable(gl.GL_BLEND)
+
+        gl.glColor4fv(Color)
+    else:
+        gl.glColor3f(0.0, 0.0, 0.0)
+
+    glu.gluQuadricDrawStyle(QUADRIC, glu.GLU_FILL)
+    glu.gluSphere(QUADRIC, radius, slices, stacks)
+
+def drawCylinder(Start=np.array([0, 0, 0]), End=np.array([1.0, 0.0, 0.0]), Radius1=1.0, Radius2=1.0, Color=None):
+    if type(Start) is not np.ndarray or type(End) is not np.ndarray:
+        raise RuntimeError('Start and End need to be Numpy arrays.')
+
+    Direction = End - Start
+    Length = np.linalg.norm(Direction)
+    if (Length <= 0.0):
+        return
+    Direction = Direction / Length
+
+    # Find out the axis of rotation and angle of rotation to rotate the
+    # gluCylinder (oriented along the z axis) into the desired direction
+    Z = np.array([0., 0., 1.])
+    Axis = np.cross(Z, Direction)
+    Angle = math.acos(np.dot(Z, Direction)) * (180. / math.pi) # Should be degrees
+
+    gl.glPushMatrix()
+    gl.glTranslate(Start[0], Start[1], Start[2])
+    gl.glRotate(Angle, Axis[0], Axis[1], Axis[2])
+
+    # Next the 6 faces
+    if (Color != None):
+        gl.glEnable(gl.GL_DEPTH_TEST)
+        gl.glHint(gl.GL_PERSPECTIVE_CORRECTION_HINT, gl.GL_NICEST)
+        gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA) # Orig
+        gl.glEnable(gl.GL_BLEND)
+
+        gl.glColor4fv(Color)
+    else:
+        gl.glColor3f(0.0, 0.0, 0.0)
+
+    # Draw cylinder
+    # Bottom:
+    glu.gluQuadricOrientation(QUADRIC, glu.GLU_INSIDE)
+    glu.gluDisk(QUADRIC, 0, Radius1, 16, 1)
+
+    glu.gluQuadricOrientation(QUADRIC, glu.GLU_OUTSIDE)
+    glu.gluCylinder(QUADRIC, Radius1, Radius2, Length, 16, 1)
+
+    # Top:
+    gl.glTranslatef(0, 0, Length)
+    glu.gluQuadricOrientation(QUADRIC, glu.GLU_OUTSIDE)
+    glu.gluDisk(QUADRIC, 0, Radius2, 16, 1)
+
+    gl.glPopMatrix()
+
+def drawCone(Start=np.array([0, 0, 0]), End=np.array([1.0, 0.0, 0.0]), Radius1=1, Radius2=0.5, Color=None):
+    drawCylinder(Start, End, Radius1, Radius2, Color)
 
 UNITCUBE_V=[
         0, 0, 0,
