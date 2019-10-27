@@ -314,9 +314,13 @@ class VoxelGrid(PointSet3D):
     def __init__(self, BinVoxGrid):
         super().__init__()
         self.VG = BinVoxGrid
-        self.GridSize = self.VG.dims[0]
-        self.VGNZ = np.nonzero(self.VG.data)
-        # We are treating VoxelGrid as a point cloud with unit cube sie limits
+        if type(self.VG) is np.ndarray:
+            self.GridSize = self.VG.shape[0] # Assuming cube grid
+            self.VGNZ = np.nonzero(self.VG)
+        else:
+            self.GridSize = self.VG.dims[0]
+            self.VGNZ = np.nonzero(self.VG.data)
+        # We are treating VoxelGrid as a point cloud with unit cube size limits
         # All 'on' voxels are a point in the point cloud. The center of a voxel is the position of the point
         self.DefaultColor = (101 / 255, 67 / 255, 33 / 255, 0.8)
         self.DefaultBorderColor = (0, 0, 0, 1)
