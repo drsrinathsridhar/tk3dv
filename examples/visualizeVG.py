@@ -22,18 +22,28 @@ class VGVizModule(EaselModule):
     def init(self, argv=None):
         self.Parser = argparse.ArgumentParser(description='This module visualizes voxel grids.', fromfile_prefix_chars='@')
         ArgGroup = self.Parser.add_argument_group()
-        ArgGroup.add_argument('-v', '--voxel-grid', help='Specify binvox file.', required=True)
+        ArgGroup.add_argument('-v', '--voxel-grid', help='Specify binvox or numpy file.', required=True)
 
         self.Args, _ = self.Parser.parse_known_args(argv)
         if len(sys.argv) <= 1:
             self.Parser.print_help()
             exit()
 
-        print('[ INFO ]: Opening binvox file:', self.Args.voxel_grid)
-        with open(self.Args.voxel_grid, 'rb') as f:
-            self.VG = binvox_rw.read_as_3d_array(f)
+        _, Ext = os.path.splitext(self.Args.voxel_grid)
+        if 'binvox' not in Ext and 'npz' not in Ext and 'npy' not in Ext:
+            raise RuntimeError('Not a binvox or numpy file')
 
-        self.VGDS = ds.VoxelGrid(self.VG)
+        print('[ INFO ]: Opening voxel grid from file:', self.Args.voxel_grid)
+        if 'binvox' in Ext:
+            with open(self.Args.voxel_grid, 'rb') as f:
+                self.VG = binvox_rw.read_as_3d_array(f)
+
+            self.VGDS = ds.VoxelGrid(self.VG)
+        else:
+            VGData = np.load(self.Args.voxel_grid)
+            # print(VGData.files) # 'full_voxel_grid', 'surface_voxel_grid'
+            self.VG = VGData['surface_voxel_grid']
+            self.VGDS = ds.VoxelGrid(self.VG)
 
         self.PointSize = 3
         self.showObjIdx = 0 # 0, 1, 2
