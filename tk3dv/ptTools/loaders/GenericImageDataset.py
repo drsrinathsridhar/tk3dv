@@ -13,10 +13,11 @@ from torch import nn
 
 # This is the basic loader that loads all data without any model ID separation of camera viewpoint knowledge
 class GenericImageDataset(torch.utils.data.Dataset):
-    class L2MaskLoss(nn.Module):
+    class LPMaskLoss(nn.Module):
         Thresh = 0.7 # PARAM
-        def __init__(self, Thresh=0.7, MaskWeight=0.7, ImWeight=0.3): # PARAM
+        def __init__(self, Thresh=0.7, MaskWeight=0.7, ImWeight=0.3, P=2): # PARAM
             super().__init__()
+            self.P = P
             self.MaskLoss = nn.BCELoss(reduction='mean')
             self.Sigmoid = nn.Sigmoid()
             self.Thresh = Thresh
@@ -41,14 +42,14 @@ class GenericImageDataset(torch.utils.data.Dataset):
             nOutIms = int(nChannels / 4)
             for i in range(0, nOutIms):
                 Range = list(range(4*i, 4*(i+1)))
-                TotalLoss += self.computeMaskedL2Loss(OutIm[:, Range, :, :], TargetIm[:, Range, :, :])
+                TotalLoss += self.computeMaskedLPLoss(OutIm[:, Range, :, :], TargetIm[:, Range, :, :])
                 Den += 1
 
             TotalLoss /= float(Den)
 
             return TotalLoss
 
-        def computeMaskedL2Loss(self, output, target):
+        def computeMaskedLPLoss(self, output, target):
             BatchSize = target.size(0)
             TargetMask = target[:, -1, :, :]
             OutMask = output[:, -1, :, :].clone().requires_grad_(True)
@@ -59,7 +60,8 @@ class GenericImageDataset(torch.utils.data.Dataset):
             TargetIm = target[:, :-1, :, :].detach()
             OutIm = output[:, :-1, :, :].clone().requires_grad_(True)
 
-            DiffNorm = torch.norm(OutIm - TargetIm, dim=1)  # Same size as WxH
+            Diff = OutIm - TargetIm
+            DiffNorm = torch.norm(Diff, p=self.P, dim=1)  # Same size as WxH
             MaskedDiffNorm = torch.where(OutMask > self.Thresh, DiffNorm,
                                          torch.zeros(DiffNorm.size(), device=DiffNorm.device))
             NOCSLoss = 0
@@ -72,6 +74,10 @@ class GenericImageDataset(torch.utils.data.Dataset):
 
             Loss = (self.MaskWeight*MaskLoss) + (self.ImWeight*(NOCSLoss / BatchSize))
             return Loss
+
+    class L2MaskLoss(LPMaskLoss):
+        def __init__(self, Thresh=0.7, MaskWeight=0.7, ImWeight=0.3): # PARAM
+            super().__init__(Thresh, MaskWeight, ImWeight, P=2)
 
     @staticmethod
     def imread_rgb_torch(Path, Size=None, interp=cv2.INTER_NEAREST): # Use only for loading RGB images
