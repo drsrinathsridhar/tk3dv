@@ -344,7 +344,8 @@ if __name__ == '__main__':
     Data.visualizeRandom(10)
     # exit()
 
-    LossUnitTest = GenericImageDataset.L2MaskLoss(0.7)
+    LossUnitTest = GenericImageDataset.LPMaskLoss(0.7, P=2)
+    # LossUnitTest = GenericImageDataset.LPMaskLoss(0.7, P=1)
     DataLoader = torch.utils.data.DataLoader(Data, batch_size=4, shuffle=True, num_workers=0)
     for i, (Data, Targets) in enumerate(DataLoader, 0):  # Get each batch
         # DataTD = ptUtils.sendToDevice(Targets, 'cpu')
