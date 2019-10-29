@@ -32,7 +32,7 @@ class GenericImageDataset(torch.utils.data.Dataset):
             nChannels = OutIm.size(1)
             TargetIm = target[0]
             if nChannels%4 != 0:
-                raise RuntimeError('Empty or mismatched batch (should be multiple of 4). Check input.')
+                raise RuntimeError('Empty or mismatched batch (should be multiple of 4). Check input size {}.'.format(OutIm.size()))
             if nChannels != TargetIm.size(1):
                 raise RuntimeError('Out target {} size mismatch with nChannels {}. Check input.'.format(TargetIm.size(1), nChannels))
 
