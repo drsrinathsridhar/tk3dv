@@ -88,6 +88,25 @@ class GenericImageDataset(torch.utils.data.Dataset):
 
         ImageCV = cv2.cvtColor(ImageCV, cv2.COLOR_BGR2RGB)
         if Size is not None:
+            # Check if the aspect ratios are the same
+            OrigSize = ImageCV.shape[:-1]
+            OrigAspectRatio = OrigSize[1] / OrigSize[0] # W / H
+            ReqAspectRatio = Size[0] / Size[1] # W / H # CAUTION: Be aware of flipped indices
+            print(OrigAspectRatio)
+            print(ReqAspectRatio)
+            if math.fabs(OrigAspectRatio-ReqAspectRatio) > 0.01:
+                # Different aspect ratio detected. So we will be fitting the smallest of the two images into the larger one while centering it
+                # After centering, we will crop and finally resize it to the request dimensions
+                if ReqAspectRatio < OrigAspectRatio:
+                    NewSize = [OrigSize[0], int(OrigSize[0] * ReqAspectRatio)] # Keep height
+                    Center = int(OrigSize[1] / 2) - 1
+                    HalfSize = int(NewSize[1] / 2)
+                    ImageCV = ImageCV[:, Center-HalfSize:Center+HalfSize, :]
+                else:
+                    NewSize = [int(OrigSize[1] / ReqAspectRatio), OrigSize[1]] # Keep width
+                    Center = int(OrigSize[0] / 2) - 1
+                    HalfSize = int(NewSize[0] / 2)
+                    ImageCV = ImageCV[Center-HalfSize:Center+HalfSize, :, :]
             ImageCV = cv2.resize(ImageCV, dsize=Size, interpolation=interp)
         Image = ptUtils.np2torch(ImageCV) # Range: 0-255
 
