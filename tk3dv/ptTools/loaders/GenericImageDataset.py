@@ -92,8 +92,8 @@ class GenericImageDataset(torch.utils.data.Dataset):
             OrigSize = ImageCV.shape[:-1]
             OrigAspectRatio = OrigSize[1] / OrigSize[0] # W / H
             ReqAspectRatio = Size[0] / Size[1] # W / H # CAUTION: Be aware of flipped indices
-            print(OrigAspectRatio)
-            print(ReqAspectRatio)
+            # print(OrigAspectRatio)
+            # print(ReqAspectRatio)
             if math.fabs(OrigAspectRatio-ReqAspectRatio) > 0.01:
                 # Different aspect ratio detected. So we will be fitting the smallest of the two images into the larger one while centering it
                 # After centering, we will crop and finally resize it to the request dimensions
