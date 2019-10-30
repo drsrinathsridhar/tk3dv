@@ -3,7 +3,7 @@ import torchvision
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
-import os, sys, argparse, math, glob, gc
+import os, sys, argparse, math, glob, gc, traceback
 import numpy as np
 
 FileDirPath = os.path.dirname(os.path.realpath(__file__))
@@ -241,6 +241,7 @@ class ptNet(nn.Module):
                 self.saveCheckpoint(Epoch, CurrLegend, TimeString='eot', PrintStr='$'*3)
                 break
             except Exception as e:
+                print(traceback.format_exc())
                 print('\n[ WARN ]: Exception detected. Saving checkpoint. {}'.format(e))
                 self.saveCheckpoint(Epoch, CurrLegend, TimeString='eot', PrintStr='$'*3)
                 break

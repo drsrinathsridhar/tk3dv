@@ -149,7 +149,7 @@ def loadLatestPyTorchCheckpoint(InDir, CheckpointName='', map_location='cpu'):
     AllCheckpoints.sort() # By name
 
     print('[ INFO ]: Loading checkpoint {}'.format(AllCheckpoints[-1]))
-    return loadPyTorchCheckpoint(AllCheckpoints[-1])
+    return loadPyTorchCheckpoint(AllCheckpoints[-1], map_location)
 
 def normalizeInput(Image, format='imagenet'):
     # All pre-trained models expect input images normalized in the same way, i.e. mini-batches of 3-channel RGB images of shape (3 x H x W), where H and W are expected to be atleast 224.
