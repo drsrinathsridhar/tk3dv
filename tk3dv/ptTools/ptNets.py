@@ -242,8 +242,8 @@ class ptNet(nn.Module):
                 break
             except Exception as e:
                 print(traceback.format_exc())
-                print('\n[ WARN ]: Exception detected. Saving checkpoint. {}'.format(e))
-                self.saveCheckpoint(Epoch, CurrLegend, TimeString='eot', PrintStr='$'*3)
+                print('\n[ WARN ]: Exception detected. *NOT* saving checkpoint. {}'.format(e))
+                # self.saveCheckpoint(Epoch, CurrLegend, TimeString='eot', PrintStr='$'*3)
                 break
 
         AllToc = ptUtils.getCurrentEpochTime()

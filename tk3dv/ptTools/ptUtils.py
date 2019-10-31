@@ -210,7 +210,7 @@ def saveLossesCurve(*args, **kwargs):
         if len(arg) <= 0:
             continue
         plt.plot(arg)
-        ylim = ylim + np.mean(np.asarray(arg))
+        ylim = ylim + np.median(np.asarray(arg))
     plt.xlabel('Epochs')
     plt.ylabel('Loss')
     if 'xlim' in kwargs:
