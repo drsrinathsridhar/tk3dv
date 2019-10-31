@@ -32,7 +32,10 @@ class ModelNOCVizModule(EaselModule):
             self.vertices = self.OBJLoader.vertices
 
         self.ModelPoints.Points = np.array(self.vertices)
-        self.ModelPoints.Colors = self.ModelPoints.Points
+        if len(self.OBJLoader.vertcolors) > 0:
+            self.ModelPoints.Colors = np.asarray(self.OBJLoader.vertcolors)
+        else:
+            self.ModelPoints.Colors = self.ModelPoints.Points
         self.ModelPoints.update()
         self.isDrawNOCSCube = True
         self.isDrawPoints = False
@@ -72,6 +75,10 @@ class ModelNOCVizModule(EaselModule):
             self.isDrawPoints = not self.isDrawPoints
         if a0.key() == QtCore.Qt.Key_M:
             self.isDrawMesh = not self.isDrawMesh
+        if a0.key() == QtCore.Qt.Key_S:
+            print('[ INFO ]: Saving model as OBJ.')
+            self.ModelPoints.serialize('visualizer_out.obj')
+            sys.stdout.flush()
 
         if a0.key() == QtCore.Qt.Key_Plus:  # Increase or decrese point size
             if self.PointSize < 20:

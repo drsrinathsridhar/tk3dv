@@ -38,7 +38,10 @@ class PointSet3D(PointSet):
         with open(OutFile, 'w') as f:
             f.write("# PointSet3D serialized file\n")
             for i in range(self.nPoints):
-                f.write('v {:.4f} {:.4f} {:.4f}\n'.format(self.Points[i, 0], self.Points[i, 1], self.Points[i, 2]))
+                if len(self.Colors) > 0:
+                    f.write('v {:.4f} {:.4f} {:.4f} {:.4f} {:.4f} {:.4f}\n'.format(self.Points[i, 0], self.Points[i, 1], self.Points[i, 2], self.Colors[i, 0], self.Colors[i, 1], self.Colors[i, 2]))
+                else:
+                    f.write('v {:.4f} {:.4f} {:.4f}\n'.format(self.Points[i, 0], self.Points[i, 1], self.Points[i, 2]))
 
     def updateBoundingBox(self):
         self.BoundingBox[0] = np.min(self.Points, axis=0)
@@ -302,6 +305,15 @@ class NOCSMap(PointSet3D):
         gl.glPopAttrib()
         gl.glPopAttrib()
         gl.glPopAttrib()
+
+    def serialize(self, OutFile):
+        super().serialize(OutFile)
+        with open(OutFile, 'a') as f:
+            f.write("# NOCSMap image connectivity\n")
+            for i in range(0, len(self.PixTIdx), 3):
+                FaceIdx = self.PixTIdx[i:i+3]
+                # f.write('f {}//{} {}//{} {}//{}\n'.format(int(FaceIdx[0]), int(FaceIdx[0]), int(FaceIdx[1]), int(FaceIdx[1]), int(FaceIdx[2]), int(FaceIdx[2])))
+                f.write('f {} {} {}\n'.format(int(FaceIdx[0]), int(FaceIdx[1]), int(FaceIdx[2])))
 
     def __del__(self):
         super().__del__()

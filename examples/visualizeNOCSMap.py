@@ -329,6 +329,8 @@ class NOCSMapModule(EaselModule):
                     if Idx != self.activeNMIdx:
                         continue
                 NOCS.serialize('nocs_' + str(Idx).zfill(2) + '_' + str(self.SSCtr).zfill(6) + '.obj')
+            print('[ INFO ]: Done saving.')
+            sys.stdout.flush()
 
 
     def keyPressEvent(self, a0: QKeyEvent):
@@ -355,9 +357,9 @@ class NOCSMapModule(EaselModule):
             self.showPoints = not self.showPoints
         if a0.key() == QtCore.Qt.Key_W:
             self.showWireFrame = not self.showWireFrame
-
         if a0.key() == QtCore.Qt.Key_S:
-            print('[ INFO ]: Taking snapshot.')
+            print('[ INFO ]: Taking snapshot and saving active NOCS maps as OBJ. This might take a while...')
+            sys.stdout.flush()
             self.takeSS = True
 
 
