@@ -10,6 +10,7 @@ from Easel import Easel
 import numpy as np
 import OpenGL.GL as gl
 from tk3dv.nocstools import datastructures as ds
+from tk3dv.nocstools import obj_loader
 
 from palettable.tableau import Tableau_20, BlueRed_12, ColorBlind_10, GreenOrange_12
 from palettable.cartocolors.diverging import Earth_2
@@ -30,11 +31,14 @@ class NOCSMapModule(EaselModule):
         ArgGroup.add_argument('--poses', nargs='+',
                               help='Specify the camera extrinsics corresponding to the input NOCS maps. * globbing is supported.',
                               required=False)
+        ArgGroup.add_argument('--models', nargs='+',
+                              help='Specify OBJ models to load addtionally. * globbing is supported.',
+                              required=False)
         ArgGroup.add_argument('--num-points', help='Specify the number of pixels to use for camera pose registration.', default=1000, type=int, required=False)
         ArgGroup.add_argument('--error-viz', help='Specify error wrto Nth NOCS map. If multiple NOCS maps are provided. Will compute the L2 errors between the Nth NOCS map and the rest. Will render this instead of RGB or colors.', default=-1, type=int, required=False)
 
         ArgGroup.add_argument('--no-pose', help='Choose to not estimate pose.', action='store_true')
-        self.Parser.set_defaults(no_pose=False)
+        self.Parser.set_defaults(no_pose=True)
 
         self.Args, _ = self.Parser.parse_known_args(InputArgs)
         if len(sys.argv) <= 1:
@@ -51,6 +55,7 @@ class NOCSMapModule(EaselModule):
         # Extrinsics, if provided
         self.PosesRots = []
         self.PosesPos = []
+        self.OBJModels = []
         self.PointSize = 3
         self.Intrinsics = None
         if self.Args.intrinsics is not None:
@@ -70,6 +75,7 @@ class NOCSMapModule(EaselModule):
         self.showPoints = False
         self.showWireFrame = False
         self.isVizError = False
+        self.showOBJModels = True
         self.loadData()
         self.generateDiffMap()
 
@@ -257,6 +263,11 @@ class NOCSMapModule(EaselModule):
         self.nNM = len(NMFiles)
         self.activeNMIdx = self.nNM # len(NMFiles) will show all
 
+        # Load OBJ models
+        ModelFiles = self.getFileNames(self.Args.models)
+        for MF in ModelFiles:
+            self.OBJModels.append(obj_loader.Loader(MF, isNormalize=True))
+
     def step(self):
         pass
 
@@ -307,6 +318,11 @@ class NOCSMapModule(EaselModule):
         if self.showNOCS:
             self.drawNOCS(lineWidth=5.0)
 
+        if self.showOBJModels:
+            if self.OBJModels is not None:
+                for OM in self.OBJModels:
+                    OM.draw(isWireFrame=self.showWireFrame)
+
         gl.glPopMatrix()
 
         if self.takeSS:
@@ -353,6 +369,8 @@ class NOCSMapModule(EaselModule):
             self.showNOCS = not self.showNOCS
         if a0.key() == QtCore.Qt.Key_B:
             self.showBB = not self.showBB
+        if a0.key() == QtCore.Qt.Key_M:
+            self.showOBJModels = not self.showOBJModels
         if a0.key() == QtCore.Qt.Key_P:
             self.showPoints = not self.showPoints
         if a0.key() == QtCore.Qt.Key_W:

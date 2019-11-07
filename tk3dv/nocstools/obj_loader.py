@@ -47,9 +47,10 @@ class Loader(object):
             self.triangle_vertices.append((self.vertices[Face[0][0]]))
             self.triangle_vertices.append((self.vertices[Face[1][0]]))
             self.triangle_vertices.append((self.vertices[Face[2][0]]))
-            self.triangle_vertices_colors.append((self.vertcolors[Face[0][0]]))
-            self.triangle_vertices_colors.append((self.vertcolors[Face[1][0]]))
-            self.triangle_vertices_colors.append((self.vertcolors[Face[2][0]]))
+            if len(self.vertcolors) > 0:
+                self.triangle_vertices_colors.append((self.vertcolors[Face[0][0]]))
+                self.triangle_vertices_colors.append((self.vertcolors[Face[1][0]]))
+                self.triangle_vertices_colors.append((self.vertcolors[Face[2][0]]))
 
         self.vertices = self.triangle_vertices
         self.vertcolors = self.triangle_vertices_colors
@@ -66,7 +67,7 @@ class Loader(object):
             XYZMax = np.max(VerticesNP, axis=0)
             DiagonalLength = np.linalg.norm(XYZMax - XYZMin)  # Get diagonal length
             self.vertices = (VerticesNP / DiagonalLength) + 0.5  # Normalize. Similar to ShapeNet normalization
-            if isOverrideVertexColors:
+            if isOverrideVertexColors or len(self.vertcolors) <= 0:
                 self.Colors = self.vertices
             print('[ INFO ]: Normalization factor (diagonal length) =', DiagonalLength)
 
@@ -93,7 +94,7 @@ class Loader(object):
         self.VBOColors = glvbo.VBO(np.asarray(self.Colors))
         self.isVBOBound = True
 
-    def draw(self, PointSize=10.0):
+    def draw(self, PointSize=10.0, isWireFrame=False):
         if self.isVBOBound == False:
             print('[ WARN ]: VBOs not bound. Call update().')
             return
@@ -111,6 +112,8 @@ class Loader(object):
             gl.glEnableClientState(gl.GL_COLOR_ARRAY)
             gl.glColorPointer(3, gl.GL_DOUBLE, 0, self.VBOColors)
 
+        if isWireFrame:
+            gl.glPolygonMode(gl.GL_FRONT_AND_BACK, gl.GL_LINE)
         gl.glDrawArrays(gl.GL_TRIANGLES, 0, self.nPoints)
 
         gl.glPopAttrib()
