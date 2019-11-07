@@ -332,11 +332,11 @@ class NOCSMapModule(EaselModule):
             # print("Screenshot viewport:", x, y, width, height)
             gl.glPixelStorei(gl.GL_PACK_ALIGNMENT, 1)
 
-            data = gl.glReadPixels(x, y, width, height, gl.GL_RGB, gl.GL_UNSIGNED_BYTE)
+            data = gl.glReadPixels(x, y, width, height, gl.GL_RGBA, gl.GL_UNSIGNED_BYTE)
             SS = np.frombuffer(data, dtype=np.uint8)
-            SS = np.reshape(SS, (height, width, 3))
+            SS = np.reshape(SS, (height, width, 4))
             SS = cv2.flip(SS, 0)
-            SS = cv2.cvtColor(SS, cv2.COLOR_BGR2RGB)
+            SS = cv2.cvtColor(SS, cv2.COLOR_BGRA2RGBA)
             cv2.imwrite('screenshot_' + str(self.SSCtr).zfill(6) + '.png', SS)
             self.SSCtr = self.SSCtr + 1
             self.takeSS = False
