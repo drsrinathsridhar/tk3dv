@@ -163,6 +163,21 @@ class NOCSMap(PointSet3D):
         self.PixVC = np.hstack([self.Colors, np.ones((self.Points.shape[0], 1))])
         self.update()
 
+    def discardSlivers(self, TriangleSet, PixV, Threshold=0.01):
+        TriangleSideLengths1 = np.vstack([     np.linalg.norm(PixV[TriangleSet[1, :]] - PixV[TriangleSet[0, :]], axis=1)
+                                            , np.linalg.norm(PixV[TriangleSet[2, :]] - PixV[TriangleSet[1, :]], axis=1)
+                                            , np.linalg.norm(PixV[TriangleSet[0, :]] - PixV[TriangleSet[2, :]], axis=1)
+                                         ])
+        Threshed = TriangleSideLengths1 > Threshold
+        DiscardIdx = np.argwhere(np.bitwise_or(Threshed[2, :], np.bitwise_or(Threshed[1, :], Threshed[0, :])))
+        RemTriangles = np.delete(TriangleSet, DiscardIdx, axis=1)
+
+        # print(TriangleSet.shape)
+        # print(RemTriangles.shape)
+
+        return RemTriangles
+
+
     def createConnectivity(self):
         if self.ValidIdx is None or self.NOCSMap is None:
             print('[ WARN ]: Call createNOCSFromNM before trying to create connectivty.')
@@ -208,9 +223,23 @@ class NOCSMap(PointSet3D):
 
         Triangles1 = np.vstack([LeftBottomMaskIdx, LeftTopMaskIdx, RightTopMaskIdx])
         Triangles2 = np.vstack([RightTopMaskIdx, RightBottomMaskIdx, LeftBottomMaskIdx])
-        TriangleSoup = np.vstack([Triangles1, Triangles2])
 
-        self.PixTIdx = TriangleSoup.T.reshape((-1, 1)).astype(np.int32)
+        PruneSlivers = True
+
+        if PruneSlivers:
+            Threshold = 0.01
+            Triangles1 = self.discardSlivers(Triangles1, self.PixV, Threshold)
+            Triangles2 = self.discardSlivers(Triangles2, self.PixV, Threshold)
+            # print(Triangles1[:, 1:4])
+            # print(Triangles1[:, 1:4].T.reshape((-1, 1)))
+
+            TriangleSoup = np.vstack([Triangles1.T.reshape((-1, 1)), Triangles2.T.reshape((-1, 1))])
+            self.PixTIdx = TriangleSoup.astype(np.int32)
+            # print(TriangleSoup.shape)
+            # exit()
+        else:
+            TriangleSoup = np.vstack([Triangles1, Triangles2])
+            self.PixTIdx = TriangleSoup.T.reshape((-1, 1)).astype(np.int32)
 
         # # SLOW FOR LOOP
         # Tic = utilities.getCurrentEpochTime()

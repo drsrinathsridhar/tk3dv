@@ -185,6 +185,8 @@ class NOCSMapModule(EaselModule):
 
     @staticmethod
     def getFileNames(InputList):
+        if InputList is None:
+            return []
         FileNames = []
         for File in InputList:
             if '*' in File:

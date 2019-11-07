@@ -39,6 +39,7 @@ class Loader(object):
         self.texcoords = texcoords
         self.faces = faces
         self.vertcolors = vertcolors
+        self.Colors = None
 
         # TODO: This is extremely inefficient
         self.triangle_vertices = []
@@ -56,20 +57,21 @@ class Loader(object):
         self.vertcolors = self.triangle_vertices_colors
         if len(self.vertcolors) > 0: # Prefer vertex colors if available
             print('[ INFO ]: Rendering using available vertex colors.')
-            self.Colors = self.vertcolors
+            self.Colors = np.asarray(self.vertcolors)
 
         # TODO: Do the normals need to be recomputed?
         if isNormalize is True:
             # Normalize model vertices to lie within the NOCS
-            VerticesNP = np.array(self.vertices)
+            VerticesNP = np.asarray(self.vertices)
             # Compute extents
             XYZMin = np.min(VerticesNP, axis=0)
             XYZMax = np.max(VerticesNP, axis=0)
             DiagonalLength = np.linalg.norm(XYZMax - XYZMin)  # Get diagonal length
             self.vertices = (VerticesNP / DiagonalLength) + 0.5  # Normalize. Similar to ShapeNet normalization
-            if isOverrideVertexColors or len(self.vertcolors) <= 0:
-                self.Colors = self.vertices
             print('[ INFO ]: Normalization factor (diagonal length) =', DiagonalLength)
+        if isOverrideVertexColors or len(self.vertcolors) <= 0 or self.Colors is None:
+            self.Colors = np.asarray(self.vertices)
+
 
         # self.Colors = VerticesNP / DiagonalLength # Normalize. Similar to ShapeNet normalization
 
