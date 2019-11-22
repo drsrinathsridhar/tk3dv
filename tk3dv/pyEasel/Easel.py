@@ -19,6 +19,7 @@ class Easel(glv.GLViewer):
         self.Modules = []
         self.Modules.extend(OtherModules)
         self.argv = argv
+        self.SleepTime = 0.001
 
         self.init()
 
@@ -40,7 +41,7 @@ class Easel(glv.GLViewer):
     def start(self, Dummy):
         while (self.isStop == False):
             if (self.isPause == True):
-                sleep(0.001) # Prevent CPU throttling
+                sleep(self.SleepTime) # Prevent CPU throttling
                 continue
             self.stepAll()
 
@@ -53,9 +54,9 @@ class Easel(glv.GLViewer):
         endTime = utilities.getCurrentEpochTime()
         ElapsedTime = (endTime - startTime)
 
-        if ElapsedTime < 1000:
-            sleep(0.001)  # Prevent CPU throttling
-            ElapsedTime += 1000
+        if ElapsedTime < self.SleepTime*1e6:
+            sleep(self.SleepTime)  # Prevent CPU throttling
+            ElapsedTime += self.SleepTime*1e6
 
         self.FPS = 1e6 / (ElapsedTime)
 
