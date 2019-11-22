@@ -224,7 +224,7 @@ class NOCSMap(PointSet3D):
         Triangles1 = np.vstack([LeftBottomMaskIdx, LeftTopMaskIdx, RightTopMaskIdx])
         Triangles2 = np.vstack([RightTopMaskIdx, RightBottomMaskIdx, LeftBottomMaskIdx])
 
-        PruneSlivers = True
+        PruneSlivers = False
 
         if PruneSlivers:
             Threshold = 0.01
