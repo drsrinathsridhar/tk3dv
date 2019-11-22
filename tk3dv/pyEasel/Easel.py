@@ -56,7 +56,8 @@ class Easel(glv.GLViewer):
 
         if ElapsedTime < self.SleepTime*1e6:
             sleep(self.SleepTime)  # Prevent CPU throttling
-            ElapsedTime += self.SleepTime*1e6
+            endTime = utilities.getCurrentEpochTime()
+            ElapsedTime = (endTime - startTime)
 
         self.FPS = 1e6 / (ElapsedTime)
 
