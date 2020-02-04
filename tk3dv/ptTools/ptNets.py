@@ -260,7 +260,7 @@ class ptNet(nn.Module):
             'SavedTimeZ': ptUtils.getZuluTimeString(),
         }
         OutFilePath = ptUtils.savePyTorchCheckpoint(CheckpointDict, self.ExptDirPath, TimeString=TimeString)
-        ptUtils.saveLossesCurve(self.LossHistory, self.ValLossHistory, out_path=os.path.splitext(OutFilePath)[0] + '.jpg',
+        ptUtils.saveLossesCurve(self.LossHistory, self.ValLossHistory, out_path=os.path.splitext(OutFilePath)[0] + '.png',
                                 xlim = [0, int(self.Config.Args.epochs + self.StartEpoch)], legend=CurrLegend, title=self.Config.Args.expt_name)
         # print('[ INFO ]: Checkpoint saved.')
         print(PrintStr) # Checkpoint saved. 50 + 3 characters [>]
