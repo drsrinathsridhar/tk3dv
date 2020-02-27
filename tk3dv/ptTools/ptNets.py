@@ -144,6 +144,8 @@ class ptNet(nn.Module):
                 print('[ INFO ]: Experiment names do not match. Training from scratch.')
 
     def validate(self, ValDataLoader, Objective, Device='cpu'):
+        import sys
+        sys.exit('ERR: THERE IS A BUG HERE. THE MODEL SHOULD BE PUT ON EVAL MODE. PLEASE FIX BEFORE PROCEEDING.')
         ValLosses = []
         Tic = ptUtils.getCurrentEpochTime()
         # print('Val length:', len(ValDataLoader))
