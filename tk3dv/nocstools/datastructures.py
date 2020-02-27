@@ -614,20 +614,49 @@ class Camera():
     def __str__(self):
         return self.Intrinsics.__str__() + '\n' + self.Extrinsics.__str__()
 
-    def draw(self, Color=None, isF = False, Length=5.0):
+    def drawCam(self, Color=None, isDrawDir=False, isFlip=False, Length=5.0, LineWidth=1.0, CubeSide=0.1):
+        R, C = self.Extrinsics.Rotation, self.Extrinsics.Translation
+        Camera.draw(R, C, Color, isDrawDir, isFlip, Length, LineWidth, CubeSide)
+
+    @staticmethod
+    def draw(R, C, Color=None, isDrawDir=False, isFlip=False, Length=5.0, LineWidth=1.0, CubeSide=0.1):
         gl.glPushMatrix()
 
         ScaleRotMat = np.identity(4)
-        R, C = self.Extrinsics.Rotation, self.Extrinsics.Translation
         ScaleRotMat[:3, :3] = R
 
         gl.glTranslate(C[0], C[1], C[2])
         gl.glMultMatrixf(ScaleRotMat)
-        if isF:
+        if isFlip:
             gl.glRotate(180, 1, 0, 0)
 
-        drawing.drawAxes(Length, Color=Color)
+        gl.glPushMatrix()
+        gl.glScale(CubeSide, CubeSide, CubeSide/2) # Flatten cube on axis direction
+        gl.glTranslate(-0.5, -0.5, -0.5)
+        drawing.drawUnitWireFrustum(LineWidth, WireColor=Color)
         gl.glPopMatrix()
+
+        if isDrawDir:
+            gl.glPushAttrib(gl.GL_LINE_BIT)
+            gl.glLineWidth(LineWidth)
+            gl.glPushAttrib(gl.GL_ENABLE_BIT)
+            gl.glLineStipple(1, 0xAAAA)  # [1]
+            gl.glEnable(gl.GL_LINE_STIPPLE)
+
+            gl.glBegin(gl.GL_LINES)
+            gl.glColor3fv(Color)
+            gl.glVertex3f(0.0, 0.0, 0.0)
+            gl.glVertex3f(0.0, 0.0, Length) # Always in the negative z
+
+            gl.glEnd()
+
+            gl.glPopAttrib()
+            gl.glPopAttrib()
+
+        # Offset = 5
+        # drawing.drawAxes(Offset + 0.2, Color=Color)
+        gl.glPopMatrix()
+
 
 
 

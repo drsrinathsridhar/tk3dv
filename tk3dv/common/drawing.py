@@ -277,6 +277,62 @@ def drawUnitCube(isRainbow=False, Color=(1, 1, 1), Alpha=1.0):
 
     gl.glPopAttrib()
 
+UNITFRUSTUM_V=[
+        0, 0, 0,
+        1, 0, 0,
+        1, 1, 0,
+        0, 1, 0,
+        0.25, 0.75, 1,
+        0.75, 0.75, 1,
+        0.75, 0.25, 1,
+        0.25, 0.25, 1,
+]
+UNITFRUSTUM_C=[
+        0, 0, 0,
+        1, 0, 0,
+        1, 1, 0,
+        0, 1, 0,
+        0.25, 0.75, 1,
+        0.75, 0.75, 1,
+        0.75, 0.25, 1,
+        0.25, 0.25, 1,
+        ]
+UNITFRUSTUM_I=[
+        0, 1, 2, 2, 3, 0,
+        0, 3, 4, 4, 7, 0,
+        4, 7, 6, 6, 5, 4,
+        0, 7, 6, 6, 1, 0,
+        1, 6, 5, 5, 2, 1,
+        3, 4, 5, 5, 2, 3,
+        ]
+
+def drawUnitWireFrustum(lineWidth=1.0, isRainbow=False, WireColor=(1, 1, 1)):
+    # Draws a frustum of size 1 and 0.5 centered at 0.5, 0.5, 0.5
+    gl.glPushAttrib(gl.GL_LINE_WIDTH)
+    gl.glLineWidth(lineWidth)
+
+    gl.glColor3f(WireColor[0], WireColor[1], WireColor[2])
+
+    for i in range(0, len(UNITFRUSTUM_I), 3): # Each face
+        gl.glBegin(gl.GL_LINE_STRIP)
+        index=UNITFRUSTUM_I[i]*3
+        if isRainbow:
+            gl.glColor3f(*UNITFRUSTUM_C[index:index+3])
+        gl.glVertex3f(*UNITFRUSTUM_V[index:index+3])
+
+        index=UNITFRUSTUM_I[i+1]*3
+        if isRainbow:
+            gl.glColor3f(*UNITFRUSTUM_C[index:index+3])
+        gl.glVertex3f(*UNITFRUSTUM_V[index:index+3])
+
+        index=UNITFRUSTUM_I[i+2]*3
+        if isRainbow:
+            gl.glColor3f(*UNITFRUSTUM_C[index:index+3])
+        gl.glVertex3f(*UNITFRUSTUM_V[index:index+3])
+        gl.glEnd()
+
+    gl.glPopAttrib()
+
 
 def getVBOs(V, VC, I):
     VBO_V = glvbo.VBO(V)
