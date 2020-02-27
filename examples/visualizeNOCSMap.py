@@ -341,14 +341,14 @@ class NOCSMapModule(EaselModule):
                 if Idx != self.activeNMIdx:
                     continue
 
-            self.Cameras[Idx].drawCam(isDrawDir=True, isFlip=isF, Color=np.array([1.0, 0.0, 0.0]), Length=CamAxisLength, LineWidth=2.0)
+            self.Cameras[Idx].draw(isDrawDir=True, isFlip=isF, Color=np.array([1.0, 0.0, 0.0]), Length=CamAxisLength, LineWidth=2.0)
         for Idx, (R_in, C_in) in enumerate(zip(self.PosesRots, self.PosesPos), 0):
             if self.activeNMIdx != self.nNM:
                 if Idx != self.activeNMIdx:
                     continue
 
             if R_in is not None and C_in is not None:
-                ds.Camera.draw(R_in, C_in, isDrawDir=True, isFlip=False, Color=np.array([0.0, 1.0, 0.0]), Length=CamAxisLength, LineWidth=2.0)
+                ds.Camera.drawCamera(R_in, C_in, isDrawDir=True, isFlip=False, Color=np.array([0.0, 1.0, 0.0]), Length=CamAxisLength, LineWidth=2.0)
 
         if self.showNOCS:
             self.drawNOCS(lineWidth=5.0)

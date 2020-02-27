@@ -614,12 +614,12 @@ class Camera():
     def __str__(self):
         return self.Intrinsics.__str__() + '\n' + self.Extrinsics.__str__()
 
-    def drawCam(self, Color=None, isDrawDir=False, isFlip=False, Length=5.0, LineWidth=1.0, CubeSide=0.1):
+    def draw(self, Color=None, isDrawDir=False, isFlip=False, Length=5.0, LineWidth=1.0, CubeSide=0.1):
         R, C = self.Extrinsics.Rotation, self.Extrinsics.Translation
-        Camera.draw(R, C, Color, isDrawDir, isFlip, Length, LineWidth, CubeSide)
+        Camera.drawCamera(R, C, Color, isDrawDir, isFlip, Length, LineWidth, CubeSide)
 
     @staticmethod
-    def draw(R, C, Color=None, isDrawDir=False, isFlip=False, Length=5.0, LineWidth=1.0, CubeSide=0.1):
+    def drawCamera(R, C, Color=None, isDrawDir=False, isFlip=False, Length=5.0, LineWidth=1.0, CubeSide=0.1):
         gl.glPushMatrix()
 
         ScaleRotMat = np.identity(4)
