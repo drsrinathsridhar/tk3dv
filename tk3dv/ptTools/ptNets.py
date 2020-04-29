@@ -144,8 +144,7 @@ class ptNet(nn.Module):
                 print('[ INFO ]: Experiment names do not match. Training from scratch.')
 
     def validate(self, ValDataLoader, Objective, Device='cpu'):
-        import sys
-        sys.exit('ERR: THERE IS A BUG HERE. THE MODEL SHOULD BE PUT ON EVAL MODE. PLEASE FIX BEFORE PROCEEDING.')
+        self.eval()         #switch to evaluation mode
         ValLosses = []
         Tic = ptUtils.getCurrentEpochTime()
         # print('Val length:', len(ValDataLoader))
@@ -165,6 +164,7 @@ class ptNet(nn.Module):
                              .format('+' * done, '-' * (50 - done), np.mean(np.asarray(ValLosses)), ptUtils.getTimeDur(Elapsed)))
             sys.stdout.flush()
         sys.stdout.write('\n')
+        self.train()     #switch back to train mode
 
         return ValLosses
 
