@@ -41,37 +41,37 @@ class Loader(object):
         self.vertcolors = vertcolors
         self.Colors = None
 
-        # TODO: This is extremely inefficient
-        self.triangle_vertices = []
-        self.triangle_vertices_colors = []
-        for Face in self.faces:
-            self.triangle_vertices.append((self.vertices[Face[0][0]]))
-            self.triangle_vertices.append((self.vertices[Face[1][0]]))
-            self.triangle_vertices.append((self.vertices[Face[2][0]]))
-            if len(self.vertcolors) > 0:
-                self.triangle_vertices_colors.append((self.vertcolors[Face[0][0]]))
-                self.triangle_vertices_colors.append((self.vertcolors[Face[1][0]]))
-                self.triangle_vertices_colors.append((self.vertcolors[Face[2][0]]))
+        if len(self.faces) > 0:
+            # TODO: This is extremely inefficient
+            self.triangle_vertices = []
+            self.triangle_vertices_colors = []
+            for Face in self.faces:
+                self.triangle_vertices.append((self.vertices[Face[0][0]]))
+                self.triangle_vertices.append((self.vertices[Face[1][0]]))
+                self.triangle_vertices.append((self.vertices[Face[2][0]]))
+                if len(self.vertcolors) > 0:
+                    self.triangle_vertices_colors.append((self.vertcolors[Face[0][0]]))
+                    self.triangle_vertices_colors.append((self.vertcolors[Face[1][0]]))
+                    self.triangle_vertices_colors.append((self.vertcolors[Face[2][0]]))
 
-        self.vertices = self.triangle_vertices
-        self.vertcolors = self.triangle_vertices_colors
-        if len(self.vertcolors) > 0: # Prefer vertex colors if available
-            print('[ INFO ]: Rendering using available vertex colors.')
-            self.Colors = np.asarray(self.vertcolors)
+            self.vertices = self.triangle_vertices
+            self.vertcolors = self.triangle_vertices_colors
+            if len(self.vertcolors) > 0: # Prefer vertex colors if available
+                print('[ INFO ]: Rendering using available vertex colors.')
+                self.Colors = np.asarray(self.vertcolors)
 
-        # TODO: Do the normals need to be recomputed?
-        if isNormalize is True:
-            # Normalize model vertices to lie within the NOCS
-            VerticesNP = np.asarray(self.vertices)
-            # Compute extents
-            XYZMin = np.min(VerticesNP, axis=0)
-            XYZMax = np.max(VerticesNP, axis=0)
-            DiagonalLength = np.linalg.norm(XYZMax - XYZMin)  # Get diagonal length
-            self.vertices = (VerticesNP / DiagonalLength) + 0.5  # Normalize. Similar to ShapeNet normalization
-            print('[ INFO ]: Normalization factor (diagonal length) =', DiagonalLength)
+            # TODO: Do the normals need to be recomputed?
+            if isNormalize is True:
+                # Normalize model vertices to lie within the NOCS
+                VerticesNP = np.asarray(self.vertices)
+                # Compute extents
+                XYZMin = np.min(VerticesNP, axis=0)
+                XYZMax = np.max(VerticesNP, axis=0)
+                DiagonalLength = np.linalg.norm(XYZMax - XYZMin)  # Get diagonal length
+                self.vertices = (VerticesNP / DiagonalLength) + 0.5  # Normalize. Similar to ShapeNet normalization
+                print('[ INFO ]: Normalization factor (diagonal length) =', DiagonalLength)
         if isOverrideVertexColors or len(self.vertcolors) <= 0 or self.Colors is None:
             self.Colors = np.asarray(self.vertices)
-
 
         # self.Colors = VerticesNP / DiagonalLength # Normalize. Similar to ShapeNet normalization
 
@@ -114,9 +114,12 @@ class Loader(object):
             gl.glEnableClientState(gl.GL_COLOR_ARRAY)
             gl.glColorPointer(3, gl.GL_DOUBLE, 0, self.VBOColors)
 
-        if isWireFrame:
-            gl.glPolygonMode(gl.GL_FRONT_AND_BACK, gl.GL_LINE)
-        gl.glDrawArrays(gl.GL_TRIANGLES, 0, self.nPoints)
+        if len(self.faces) > 0:
+            if isWireFrame:
+                gl.glPolygonMode(gl.GL_FRONT_AND_BACK, gl.GL_LINE)
+            gl.glDrawArrays(gl.GL_TRIANGLES, 0, self.nPoints)
+        else:
+            gl.glDrawArrays(gl.GL_POINTS, 0, self.nPoints)
 
         gl.glPopAttrib()
 
