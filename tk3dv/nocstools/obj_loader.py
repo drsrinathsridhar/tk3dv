@@ -3,7 +3,7 @@ import OpenGL.GL as gl
 import OpenGL.arrays.vbo as glvbo
 
 class Loader(object):
-    def __init__(self, path, isNormalize=False, isOverrideVertexColors=False):
+    def __init__(self, path, isNormalize=False, isOverrideVertexColors=False, isVerbose=True):
         self.isVBOBound = False
 
         vertices = []
@@ -75,8 +75,9 @@ class Loader(object):
 
         # self.Colors = VerticesNP / DiagonalLength # Normalize. Similar to ShapeNet normalization
 
-        print('[ INFO ]: Loaded', path, '\n\t\twith vertices/faces/normals:',
-              len(self.vertices), '/', len(self.faces), '/', len(self.normals))
+        if isVerbose:
+            print('[ INFO ]: Loaded', path, '\n\t\twith vertices/faces/normals:',
+                  len(self.vertices), '/', len(self.faces), '/', len(self.normals))
 
         self.update()
 
