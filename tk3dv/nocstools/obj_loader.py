@@ -60,16 +60,16 @@ class Loader(object):
                 print('[ INFO ]: Rendering using available vertex colors.')
                 self.Colors = np.asarray(self.vertcolors)
 
-            # TODO: Do the normals need to be recomputed?
-            if isNormalize is True:
-                # Normalize model vertices to lie within the NOCS
-                VerticesNP = np.asarray(self.vertices)
-                # Compute extents
-                XYZMin = np.min(VerticesNP, axis=0)
-                XYZMax = np.max(VerticesNP, axis=0)
-                DiagonalLength = np.linalg.norm(XYZMax - XYZMin)  # Get diagonal length
-                self.vertices = (VerticesNP / DiagonalLength) + 0.5  # Normalize. Similar to ShapeNet normalization
-                print('[ INFO ]: Normalization factor (diagonal length) =', DiagonalLength)
+        # TODO: Do the normals need to be recomputed?
+        if isNormalize is True:
+            # Normalize model vertices to lie within the NOCS
+            VerticesNP = np.asarray(self.vertices)
+            # Compute extents
+            XYZMin = np.min(VerticesNP, axis=0)
+            XYZMax = np.max(VerticesNP, axis=0)
+            DiagonalLength = np.linalg.norm(XYZMax - XYZMin)  # Get diagonal length
+            self.vertices = (VerticesNP / DiagonalLength) + 0.5  # Normalize. Similar to ShapeNet normalization
+            print('[ INFO ]: Normalization factor (diagonal length) =', DiagonalLength)
         if isOverrideVertexColors or len(self.vertcolors) <= 0 or self.Colors is None:
             self.Colors = np.asarray(self.vertices)
 
