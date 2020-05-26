@@ -45,6 +45,7 @@ class ModelNOCVizModule(EaselModule):
         self.isDrawNOCSCube = True
         self.isDrawPoints = False
         self.isDrawMesh = True
+        self.isDrawBB = False
         self.RotateAngle = 0
         self.PointSize = 10.0
         self.nModels = len(self.Args.models)
@@ -73,6 +74,8 @@ class ModelNOCVizModule(EaselModule):
                 self.OBJLoaders[Idx].draw(self.PointSize)
             if self.isDrawPoints:
                 self.Models[Idx].draw(self.PointSize)
+            if self.isDrawBB:
+                self.Models[Idx].drawBB()
 
         if self.isDrawNOCSCube:
             drawing.drawUnitWireCube(5.0, True)
@@ -91,6 +94,8 @@ class ModelNOCVizModule(EaselModule):
             self.isDrawPoints = not self.isDrawPoints
         if a0.key() == QtCore.Qt.Key_M:
             self.isDrawMesh = not self.isDrawMesh
+        if a0.key() == QtCore.Qt.Key_B:
+            self.isDrawBB = not self.isDrawBB
         if a0.key() == QtCore.Qt.Key_S:
             print('[ INFO ]: Saving current model as OBJ.')
             if self.activeModelIdx == self.nModels:
