@@ -342,7 +342,7 @@ class NOCSMap(PointSet3D):
             for i in range(0, len(self.PixTIdx), 3):
                 FaceIdx = self.PixTIdx[i:i+3]
                 # f.write('f {}//{} {}//{} {}//{}\n'.format(int(FaceIdx[0]), int(FaceIdx[0]), int(FaceIdx[1]), int(FaceIdx[1]), int(FaceIdx[2]), int(FaceIdx[2])))
-                f.write('f {} {} {}\n'.format(int(FaceIdx[0]), int(FaceIdx[1]), int(FaceIdx[2])))
+                f.write('f {} {} {}\n'.format(int(FaceIdx[0]+1), int(FaceIdx[1]+1), int(FaceIdx[2]+1)))
 
     def __del__(self):
         super().__del__()
