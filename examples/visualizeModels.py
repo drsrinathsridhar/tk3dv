@@ -21,6 +21,9 @@ class ModelNOCVizModule(EaselModule):
         self.Parser = argparse.ArgumentParser(description='NOCSMapModule to visualize NOCS maps and camera poses.', fromfile_prefix_chars='@')
         ArgGroup = self.Parser.add_argument_group()
         ArgGroup.add_argument('--models', nargs='+', help='Specify input OBJ model paths. * globbing is supported.', required=True)
+        ArgGroup.add_argument('--normalize', help='Choose to normalize models to lie within NOCS.', action='store_true')
+        self.Parser.set_defaults(normalize=False)
+
 
         self.Args, _ = self.Parser.parse_known_args(InputArgs)
         if len(sys.argv) <= 1:
@@ -33,7 +36,11 @@ class ModelNOCVizModule(EaselModule):
 
         for m in self.Args.models:
             self.Models.append(datastructures.PointSet3D())
-            self.OBJLoaders.append(obj_loader.Loader(m, isNormalize=False))
+            if self.Args.normalize == True:
+                print('[ INFO ]: Normalizing models to lie within NOCS.')
+                self.OBJLoaders.append(obj_loader.Loader(m, isNormalize=True))
+            else:
+                self.OBJLoaders.append(obj_loader.Loader(m, isNormalize=False))
             if len(self.OBJLoaders[-1].vertices) > 0:
                 self.Models[-1].Points = np.array(self.OBJLoaders[-1].vertices)
             if len(self.OBJLoaders[-1].vertcolors) > 0:
