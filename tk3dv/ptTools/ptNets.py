@@ -42,7 +42,7 @@ class ptNetLoss(nn.Module):
 
             self.Losses = Losses
             self.Weights = Weights
-            self.Names = ['Unnamed Loss ' + str(i).zfill(2) for i in range(len(self.Losses))]
+            self.Names = ['Default Train Subloss ' + str(i).zfill(2) for i in range(len(self.Losses))]
             for Ctr, n in enumerate(Names, 0):
                 self.Names[Ctr] = n
             self.cleanUp()
@@ -244,8 +244,7 @@ class ptNet(nn.Module):
 
         ObjectiveFunc = Objective
         if isinstance(ObjectiveFunc, ptNetLoss) == False:
-            ObjectiveFunc = ptNetLoss(Losses=[ObjectiveFunc, ObjectiveFunc], Weights=[0.2, 0.8]) # Cast to ptNetLoss
-            # ObjectiveFunc = ptNetLoss(Losses=[ObjectiveFunc], Weights=[1.0])  # Cast to ptNetLoss
+            ObjectiveFunc = ptNetLoss(Losses=[ObjectiveFunc], Weights=[1.0])  # Cast to ptNetLoss
 
         self.setupCheckpoint(TrainDevice)
 
