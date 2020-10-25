@@ -206,10 +206,13 @@ def colorizeInstanceMask(InstanceMask):
 def saveLossesCurve(*args, **kwargs):
     plt.clf()
     ylim = 0
-    for arg in args:
+    for Ctr, arg in enumerate(args, 0):
         if len(arg) <= 0:
             continue
-        plt.plot(arg)
+        if Ctr > 1: # For sublosses
+            plt.plot(arg, linestyle='--')
+        else:
+            plt.plot(arg, linestyle='-')
         ylim = ylim + np.median(np.asarray(arg))
     plt.xlabel('Epochs')
     plt.ylabel('Loss')

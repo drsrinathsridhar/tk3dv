@@ -42,7 +42,7 @@ class ptNetLoss(nn.Module):
 
             self.Losses = Losses
             self.Weights = Weights
-            self.Names = ['Default Train Subloss ' + str(i).zfill(2) for i in range(len(self.Losses))]
+            self.Names = ['Subloss ' + str(i).zfill(2) for i in range(len(self.Losses))]
             for Ctr, n in enumerate(Names, 0):
                 self.Names[Ctr] = n
             self.cleanUp()
