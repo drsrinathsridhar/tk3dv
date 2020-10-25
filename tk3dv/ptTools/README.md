@@ -19,6 +19,6 @@ Testing:
 
 # Contact
 Srinath Sridhar  
-[ssrinath@cs.stanford.edu][1]
+[srinaths@umich.edu][1]
 
-[1]: [mailto:ssrinath@cs.stanford.edu]
+[1]: [mailto:srinaths@umich.edu]

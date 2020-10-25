@@ -18,6 +18,68 @@ def RestrictedFloat_N10_100(x):
         raise argparse.ArgumentTypeError('{} not in range [{}, {}]'.format(x, MinMax[0], MinMax[1]))
     return x
 
+class ptNetMSELoss(nn.Module):
+    def __init__(self):
+        super().__init__()
+
+    def forward(self, output, target):
+        return self.computeLoss(output, target)
+
+    def computeLoss(self, output, target):
+        loss = torch.mean((output - target) ** 2)
+        return loss
+
+class ptNetLoss(nn.Module):
+    def __init__(self, Losses=[], Weights=[], Names=[]):
+        super().__init__()
+        if not Losses: # empty list
+            self.Losses = [ptNetMSELoss()]
+            self.Weights = [1.0]
+            self.Names = ['Default MSE Loss']
+        else:
+            if len(Losses) != len(Weights):
+                raise RuntimeError('ptNetLoss() given Losses and Weights don''t match.')
+
+            self.Losses = Losses
+            self.Weights = Weights
+            self.Names = ['Unnamed Loss ' + str(i).zfill(2) for i in range(len(self.Losses))]
+            for Ctr, n in enumerate(Names, 0):
+                self.Names[Ctr] = n
+            self.cleanUp()
+
+    def __len__(self):
+        return len(self.Losses)
+
+    def getItems(self, withoutWeights=False):
+        RetLossValsFloat = []
+        if withoutWeights:
+            for v in self.LossVals:
+                RetLossValsFloat.append(v.item())
+        else:
+            for v in self.LossValsWeighted:
+                RetLossValsFloat.append(v.item())
+
+        return RetLossValsFloat
+
+    def cleanUp(self):
+        self.LossVals = [0.0] * len(self.Losses)
+        self.LossValsWeighted = [0.0] * len(self.Losses)
+
+    def forward(self, output, target):
+        self.cleanUp()
+        return self.computeLoss(output, target)
+
+    def computeLoss(self, output, target):
+        TotalLossVal = 0.0
+
+        for Ctr, (l, w) in enumerate(zip(self.Losses, self.Weights), 0):
+            LossVal = l.forward(output, target)
+            self.LossVals[Ctr] = LossVal
+            self.LossValsWeighted[Ctr] = w * LossVal
+            TotalLossVal += self.LossValsWeighted[Ctr]
+
+        return TotalLossVal
+
 class ptNetExptConfig():
     def __init__(self, InputArgs=None, isPrint=True):
         self.Parser = argparse.ArgumentParser(description='Parse arguments for a PyTorch neural network.', fromfile_prefix_chars='@')
@@ -103,6 +165,7 @@ class ptNet(nn.Module):
         self.SaveFrequency = self.Config.Args.save_freq if self.Config.Args.save_freq > 0 else self.Config.Args.epochs
         self.LossHistory = []
         self.ValLossHistory = []
+        self.SeparateLossesHistory = []
 
     def loadCheckpoint(self, Path=None, Device='cpu'):
         if Path is None:
@@ -133,9 +196,13 @@ class ptNet(nn.Module):
                     self.ValLossHistory = LatestCheckpointDict['ValLossHistory']
                 else:
                     self.ValLossHistory = self.LossHistory
+                if 'SeparateLossesHistory' in LatestCheckpointDict:
+                    self.SeparateLossesHistory = LatestCheckpointDict['SeparateLossesHistory']
+                else:
+                    self.SeparateLossesHistory = self.LossHistory
 
                 # Move optimizer state to GPU if needed. See https://github.com/pytorch/pytorch/issues/2830
-                if TrainDevice is not 'cpu':
+                if TrainDevice != 'cpu':
                     for state in self.Optimizer.state.values():
                         for k, v in state.items():
                             if isinstance(v, torch.Tensor):
@@ -175,16 +242,22 @@ class ptNet(nn.Module):
         else:
             self.Optimizer = Optimizer
 
+        ObjectiveFunc = Objective
+        if isinstance(ObjectiveFunc, ptNetLoss) == False:
+            ObjectiveFunc = ptNetLoss(Losses=[ObjectiveFunc, ObjectiveFunc], Weights=[0.2, 0.8]) # Cast to ptNetLoss
+            # ObjectiveFunc = ptNetLoss(Losses=[ObjectiveFunc], Weights=[1.0])  # Cast to ptNetLoss
+
         self.setupCheckpoint(TrainDevice)
 
         print('[ INFO ]: Training on {}'.format(TrainDevice))
         self.to(TrainDevice)
-        CurrLegend = ['Train loss']
+        CurrLegend = ['Train loss', *ObjectiveFunc.Names]
 
         AllTic = ptUtils.getCurrentEpochTime()
         for Epoch in range(self.Config.Args.epochs):
             try:
                 EpochLosses = [] # For all batches in an epoch
+                EpochSeparateLosses = []  # For all batches in an epoch
                 Tic = ptUtils.getCurrentEpochTime()
                 for i, (Data, Targets) in enumerate(TrainDataLoader, 0):  # Get each batch
                     DataTD = ptUtils.sendToDevice(Data, TrainDevice)
@@ -195,10 +268,11 @@ class ptNet(nn.Module):
                     # Forward, backward, optimize
                     Output = self.forward(DataTD)
 
-                    Loss = Objective(Output, TargetsTD)
+                    Loss = ObjectiveFunc(Output, TargetsTD)
                     Loss.backward()
                     self.Optimizer.step()
                     EpochLosses.append(Loss.item())
+                    EpochSeparateLosses.append(ObjectiveFunc.getItems())
 
                     gc.collect() # Collect garbage after each batch
 
@@ -224,11 +298,16 @@ class ptNet(nn.Module):
                 sys.stdout.write('\n')
 
                 self.LossHistory.append(np.mean(np.asarray(EpochLosses)))
+
+                # Transpose and sum: https://stackoverflow.com/questions/47114706/python-sum-first-element-of-a-list-of-lists
+                SepMeans = list(map(sum, zip(*EpochSeparateLosses)))
+                SepMeans[:] = [x / len(EpochLosses) for x in SepMeans]
+                self.SeparateLossesHistory.append(SepMeans)
                 if ValDataLoader is not None:
                     ValLosses = self.validate(ValDataLoader, Objective, TrainDevice)
                     self.ValLossHistory.append(np.mean(np.asarray(ValLosses)))
                     # print('Last epoch val loss - {:.16f}'.format(self.ValLossHistory[-1]))
-                    CurrLegend = ['Train loss', 'Val loss']
+                    CurrLegend = ['Train loss', 'Val loss', *ObjectiveFunc.Names]
 
                 # Always save checkpoint after an epoch. Will be replaced each epoch. This is independent of requested checkpointing
                 self.saveCheckpoint(Epoch, CurrLegend, TimeString='eot', PrintStr='~'*3)
@@ -258,12 +337,17 @@ class ptNet(nn.Module):
             'OptimizerStateDict': self.Optimizer.state_dict(),
             'LossHistory': self.LossHistory,
             'ValLossHistory': self.ValLossHistory,
+            'SeparateLossesHistory': self.SeparateLossesHistory,
             'Epoch': self.StartEpoch + Epoch + 1,
             'SavedTimeZ': ptUtils.getZuluTimeString(),
         }
         OutFilePath = ptUtils.savePyTorchCheckpoint(CheckpointDict, self.ExptDirPath, TimeString=TimeString)
-        ptUtils.saveLossesCurve(self.LossHistory, self.ValLossHistory, out_path=os.path.splitext(OutFilePath)[0] + '.png',
+        # ptUtils.saveLossesCurve(self.LossHistory, self.ValLossHistory, out_path=os.path.splitext(OutFilePath)[0] + '.png',
+        #                         xlim = [0, int(self.Config.Args.epochs + self.StartEpoch)], legend=CurrLegend, title=self.Config.Args.expt_name)
+        TSLH = list(map(list, zip(*self.SeparateLossesHistory))) # Transposed list
+        ptUtils.saveLossesCurve(self.LossHistory, self.ValLossHistory, *TSLH, out_path=os.path.splitext(OutFilePath)[0] + '.png',
                                 xlim = [0, int(self.Config.Args.epochs + self.StartEpoch)], legend=CurrLegend, title=self.Config.Args.expt_name)
+
         # print('[ INFO ]: Checkpoint saved.')
         print(PrintStr) # Checkpoint saved. 50 + 3 characters [>]
 
