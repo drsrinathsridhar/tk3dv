@@ -44,6 +44,7 @@ class ModelNOCVizModule(EaselModule):
             if len(self.OBJLoaders[-1].vertices) > 0:
                 self.Models[-1].Points = np.array(self.OBJLoaders[-1].vertices)
             if len(self.OBJLoaders[-1].vertcolors) > 0:
+                print('[ INFO ]: Found vertex colors. Will be used for rendering.')
                 self.Models[-1].Colors = np.asarray(self.OBJLoaders[-1].vertcolors)
             else:
                 self.Models[-1].Colors = self.Models[-1].Points

@@ -40,6 +40,9 @@ class Loader(object):
         self.faces = faces
         self.vertcolors = vertcolors
         self.Colors = None
+        if len(self.vertcolors) > 0:  # Prefer vertex colors if available
+            print('[ INFO ]: Rendering using available vertex colors.')
+            self.Colors = np.asarray(self.vertcolors)
 
         if len(self.faces) > 0:
             # TODO: This is extremely inefficient
