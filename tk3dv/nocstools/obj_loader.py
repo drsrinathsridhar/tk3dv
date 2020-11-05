@@ -20,7 +20,12 @@ class Loader(object):
             if values[0] == 'v':
                 vertices.append(tuple(map(float, values[1:4])))
                 if len(values) == 7: # read vertex colors where available in values[4:7]
-                    vertcolors.append(tuple(map(float, values[4:7])))
+                    ColVal = np.array(list(map(float, values[4:7])))
+                    if np.linalg.norm(ColVal) > 1.74: # Check if between 0-1 or 0-255
+                        ColVal /= 255
+                        vertcolors.append((ColVal[0], ColVal[1], ColVal[2]))
+                    else:
+                        vertcolors.append(tuple(map(float, values[4:7])))
             elif values[0] == 'vn':
                 normals.append(tuple(map(float, values[1:4])))
             elif values[0] == 'vt':
