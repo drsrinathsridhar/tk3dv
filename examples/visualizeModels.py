@@ -54,7 +54,10 @@ class ModelNOCVizModule(EaselModule):
         self.isDrawPoints = False
         self.isDrawMesh = True
         self.isDrawBB = False
+        # self.RotateAngle = -90
+        # self.RotateAxis = np.array([1, 0, 0])
         self.RotateAngle = 0
+        self.RotateAxis = np.array([1, 0, 0])
         self.PointSize = 10.0
         self.nModels = len(self.Args.models)
         self.activeModelIdx = self.nModels # nModels will show all
@@ -70,7 +73,7 @@ class ModelNOCVizModule(EaselModule):
         Offset = -0.5
         gl.glPushMatrix()
 
-        gl.glRotate(self.RotateAngle, 0, 1, 0)
+        gl.glRotate(self.RotateAngle, self.RotateAxis[0], self.RotateAxis[1], self.RotateAxis[2])
         gl.glScale(Scale, Scale, Scale)
         gl.glTranslate(Offset, Offset, Offset)
 
