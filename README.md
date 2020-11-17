@@ -3,7 +3,7 @@
 # tk3dv
 The Toolkit for 3D Vision (tk3dv) is a collection of tools for deep learning and 3D computer vision. 
 
-**Note:** Install tk3dv on a machine with a display as it uses OpenGL which requires x-server.
+**Note:** To use pyEasel, the visualization component of tk3dv, you must use tk3dv on a machine with a display as it uses OpenGL.
 
 ## Requirements
 
