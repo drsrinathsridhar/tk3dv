@@ -12,6 +12,8 @@ import OpenGL.GL as gl
 from tk3dv.nocstools import datastructures, obj_loader
 import PyQt5.QtCore as QtCore
 import numpy as np
+from palettable.matplotlib import Plasma_20 as ColorPalette
+import palettable
 
 class ModelNOCVizModule(EaselModule):
     def __init__(self):
@@ -23,7 +25,11 @@ class ModelNOCVizModule(EaselModule):
         ArgGroup.add_argument('--models', nargs='+', help='Specify input OBJ model paths. * globbing is supported.', required=True)
         ArgGroup.add_argument('--normalize', help='Choose to normalize models to lie within NOCS.', action='store_true')
         self.Parser.set_defaults(normalize=False)
-
+        ArgGroup.add_argument('--color-order', help='Choose to color models with point color order.', action='store_true')
+        self.Parser.set_defaults(color_order=False)
+        ArgGroup.add_argument('--half-offset', help='Offset all points by +0.5.', action='store_true')
+        self.Parser.set_defaults(half_offset=False)
+        ArgGroup.add_argument('--color-file', help='Choose a color from file. Should match number of points in model.', required=False)
 
         self.Args, _ = self.Parser.parse_known_args(InputArgs)
         if len(sys.argv) <= 1:
@@ -32,7 +38,6 @@ class ModelNOCVizModule(EaselModule):
 
         self.Models = []
         self.OBJLoaders = []
-
 
         for m in self.Args.models:
             self.Models.append(datastructures.PointSet3D())
@@ -48,12 +53,33 @@ class ModelNOCVizModule(EaselModule):
                 self.Models[-1].Colors = np.asarray(self.OBJLoaders[-1].vertcolors)
             else:
                 self.Models[-1].Colors = self.Models[-1].Points
+
+            if self.Args.color_file is not None:
+                print('[ INFO ]: Coloring models with file.')
+                Colors = np.load(self.Args.color_file)
+                # print(self.Models[-1].Colors.shape)
+                # print(Colors[:, :3].shape)
+                self.Models[-1].Colors = np.asarray(Colors[:, :3]) + 0.5
+            if self.Args.color_order == True:
+                print('[ INFO ]: Coloring models with point order color.')
+                Steps = np.linspace(0.0, 1.0, num=len(self.Models[-1]))
+                Colors = ColorPalette.mpl_colormap(Steps)
+                # print(self.Models[-1].Colors.shape)
+                # print(Colors[:, :3].shape)
+                self.Models[-1].Colors = np.asarray(Colors[:, :3])
+                # # TEMP
+                # np.save('colors', self.Models[-1].Points)
+
+            if self.Args.half_offset == True:
+                self.Models[-1].Points += 0.5
+
             self.Models[-1].update()
 
         self.isDrawNOCSCube = True
         self.isDrawPoints = False
         self.isDrawMesh = True
         self.isDrawBB = False
+        self.isColorByOrder = False
         # self.RotateAngle = -90
         # self.RotateAxis = np.array([1, 0, 0])
         self.RotateAngle = 0
