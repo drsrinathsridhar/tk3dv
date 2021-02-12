@@ -24,3 +24,13 @@ If reinstalling on Ubuntu, make sure to uninstall and repeat the install.
 [1]: https://github.com/anderskm/gputil
 [2]: https://jiffyclub.github.io/palettable/
 [3]: https://pytorch.org/
+
+## Issues
+
+<details><summary>Import error on macOS Big Sur </summary>
+<p>
+
+Please find the solution in [this issue](https://github.com/drsrinathsridhar/tk3dv/issues/4).
+
+</p>
+</details>
