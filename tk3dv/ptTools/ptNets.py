@@ -88,7 +88,7 @@ class ptNetExptConfig():
         self.Parser.add_argument('--learning-rate', help='Choose the learning rate.', required=False, default=0.001,
                             type=RestrictedFloat_N10_100)
         self.Parser.add_argument('--batch-size', help='Choose mini-batch size.', choices=range(1, 4096), metavar='1..4096',
-                            required=False, default=128, type=int)
+                            required=False, default=16, type=int)
 
         # Machine-specific params
         self.Parser.add_argument('--expt-name', help='Provide a name for this experiment.')
