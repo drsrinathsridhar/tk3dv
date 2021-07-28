@@ -10,6 +10,7 @@ The Toolkit for 3D Vision (tk3dv) is a collection of tools for deep learning and
 - [PyTorch 1.1+][3]: `conda install pytorch torchvision cudatoolkit=9.0 -c pytorch`
 - [Palettable][2]: `pip install palettable`
 - [GPUtil][1]: `pip install gputil`
+- [Matplotlib][4]: `conda install -c conda-forge matplotlib`
 
 
 ## Installation
@@ -24,6 +25,7 @@ If reinstalling on Ubuntu, make sure to uninstall and repeat the install.
 [1]: https://github.com/anderskm/gputil
 [2]: https://jiffyclub.github.io/palettable/
 [3]: https://pytorch.org/
+[4]: https://matplotlib.org/stable/users/installing.html
 
 ## Issues
 
