@@ -11,6 +11,7 @@ The Toolkit for 3D Vision (tk3dv) is a collection of tools for deep learning and
 - [Palettable][2]: `pip install palettable`
 - [GPUtil][1]: `pip install gputil`
 - [Matplotlib][4]: `conda install -c conda-forge matplotlib`
+- Please install GLUT if your OS does not come with it. For Ubunutu, `sudo apt-get install freeglut3-dev`.
 
 
 ## Installation
