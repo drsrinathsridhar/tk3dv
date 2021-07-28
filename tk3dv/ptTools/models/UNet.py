@@ -57,7 +57,7 @@ class UNet(ptNets.ptNet):
                 self.Output = nn.DataParallel(self.Output, device_ids=DataParallelDevs)
 
     def forward(self, x):
-        x, FM1 = self.DBlock1(x.float())
+        x, FM1 = self.DBlock1(x)
         x, FM2 = self.DBlock2(x)
         x, FM3 = self.DBlock3(x)
         x, FM4 = self.DBlock4(x)
