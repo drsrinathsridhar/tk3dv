@@ -358,7 +358,7 @@ Parser.add_argument('-d', '--data-dir', help='Specify the location of the direct
 if __name__ == '__main__':
     Args, _ = Parser.parse_known_args()
 
-    Data = GenericImageDataset(root=Args.data_dir, train=True, download=True, imgSize=(320, 240))#, FrameLoadStr=['color00', 'normals00', 'nox00', 'pnnocs00', 'uv00', 'camera'])
+    Data = GenericImageDataset(root=Args.data_dir, train=True, download=True, imgSize=(320, 240))#, FrameLoadStr=['VertexColors', 'NOCS'])
     # Data.saveItem(random.randint(0, len(Data)))
     Data.visualizeRandom(10)
     # exit()
@@ -368,8 +368,8 @@ if __name__ == '__main__':
     DataLoader = torch.utils.data.DataLoader(Data, batch_size=4, shuffle=True, num_workers=0)
     for i, (Data, Targets) in enumerate(DataLoader, 0):  # Get each batch
         # DataTD = ptUtils.sendToDevice(Targets, 'cpu')
-        # print('Data size:', Data.size())
-        # print('Targets size:', len(Targets))
+        print('Data size:', Data.size())
+        print('Targets size:', len(Targets))
         Loss = LossUnitTest(Targets[0], Targets)
         print('Loss:', Loss.item())
         # Loss.backward()
