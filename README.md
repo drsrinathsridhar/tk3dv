@@ -1,15 +1,13 @@
 [![license](https://img.shields.io/github/license/mashape/apistatus.svg)](https://github.com/drsrinathsridhar/tk3dv/blob/master/LICENSE)
 
 # tk3dv
-The Toolkit for 3D Vision (tk3dv) is a collection of tools for deep learning and 3D computer vision. 
+The Toolkit for 3D Vision (tk3dv) is a collection of visualization tools for 3D computer vision/graphics. 
 
 **Note:** To use pyEasel, the visualization component of tk3dv, you must use tk3dv on a machine with a display as it uses OpenGL.
 
 ## Requirements
 
-- [PyTorch 1.1+][3]: `conda install pytorch torchvision cudatoolkit=9.0 -c pytorch`
 - [Palettable][2]: `pip install palettable`
-- [GPUtil][1]: `pip install gputil`
 - [Matplotlib][4]: `conda install -c conda-forge matplotlib`
 - Please install GLUT if your OS does not come with it. For Ubunutu, `sudo apt-get install freeglut3-dev`.
 
