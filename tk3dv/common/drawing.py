@@ -131,6 +131,20 @@ def drawSolidSphere(radius=1.0, slices=16, stacks=16, Color=None):
 
     glu.gluQuadricDrawStyle(QUADRIC, glu.GLU_FILL)
     glu.gluSphere(QUADRIC, radius, slices, stacks)
+    
+def drawWireSphere(radius=1.0, slices=16, stacks=16, Color=None):
+    if (Color != None):
+        gl.glEnable(gl.GL_DEPTH_TEST)
+        gl.glHint(gl.GL_PERSPECTIVE_CORRECTION_HINT, gl.GL_NICEST)
+        gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA) # Orig
+        gl.glEnable(gl.GL_BLEND)
+
+        gl.glColor4fv(Color)
+    else:
+        gl.glColor3f(0.0, 0.0, 0.0)
+
+    glu.gluQuadricDrawStyle(QUADRIC, glu.GLU_LINE)
+    glu.gluSphere(QUADRIC, radius, slices, stacks)
 
 def drawCylinder(Start=np.array([0, 0, 0]), End=np.array([1.0, 0.0, 0.0]), Radius1=1.0, Radius2=1.0, Color=None):
     if type(Start) is not np.ndarray or type(End) is not np.ndarray:
