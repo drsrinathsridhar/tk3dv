@@ -462,6 +462,21 @@ def drawCheckerBoard(floorSize, squareWidthInPixel, squareHeightInPixel, SceneHe
     gl.glPopAttrib()
     gl.glPopAttrib()
 
+def lightsOn():
+    gl.glShadeModel(gl.GL_SMOOTH)
+    mat_specular = np.array([1.0, 1.0, 1.0, 1.0])
+    mat_shininess = np.array([128])
+    light_position = np.array([0.0, 3.0, 0.0, 0.0])
+    gl.glLightfv(gl.GL_LIGHT0, gl.GL_POSITION, light_position)
+    gl.glLightfv(gl.GL_LIGHT0, gl.GL_SPECULAR, mat_specular)
+
+    gl.glEnable(gl.GL_LIGHTING)
+    gl.glEnable(gl.GL_LIGHT0)
+
+def lightsOff():
+    gl.glDisable(gl.GL_LIGHT0)
+    gl.glDisable(gl.GL_LIGHTING)
+
 def drawCheckerBoardOld(floorSize, squareWidthInPixel, squareHeightInPixel, SceneHeight):
     mat_specular = np.array([1.0, 1.0, 1.0, 1.0])
     mat_shininess = np.array([128])
