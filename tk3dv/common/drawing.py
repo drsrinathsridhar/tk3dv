@@ -486,7 +486,7 @@ def lightsOff():
     # gl.glDisable(gl.GL_LIGHT2)
     gl.glDisable(gl.GL_LIGHTING)
     
-def enableDefaultMaterial()
+def enableDefaultMaterial():
     color = np.array([0.5, 0.6, 0.8, 1.0])
     mat_shininess = np.array([128])
     mat_specular = np.array([1.0, 1.0, 1.0, 1.0]) / 4
