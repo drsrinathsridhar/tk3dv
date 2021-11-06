@@ -464,18 +464,35 @@ def drawCheckerBoard(floorSize, squareWidthInPixel, squareHeightInPixel, SceneHe
 
 def lightsOn():
     gl.glShadeModel(gl.GL_SMOOTH)
-    mat_specular = np.array([1.0, 1.0, 1.0, 1.0])
-    mat_shininess = np.array([128])
-    light_position = np.array([0.0, 3.0, 0.0, 0.0])
-    gl.glLightfv(gl.GL_LIGHT0, gl.GL_POSITION, light_position)
-    gl.glLightfv(gl.GL_LIGHT0, gl.GL_SPECULAR, mat_specular)
-
+    gl.glEnable(gl.GL_NORMALIZE)
     gl.glEnable(gl.GL_LIGHTING)
+
+    # TODO: No idea why light1 doesn't work when light0 is active. But just light1 works fine
+    # light0_position = np.array([3, 3, 3, 0.0])
+    # gl.glLightfv(gl.GL_LIGHT0, gl.GL_POSITION, light0_position)
+    light1_position = np.array([0, 3, 3, 0.0])
+    gl.glLightfv(gl.GL_LIGHT1, gl.GL_POSITION, light1_position)
+    # light2_position = np.array([3, 3, 3, 0.0])
+    # gl.glLightfv(gl.GL_LIGHT2, gl.GL_POSITION, light2_position)
+
+    # gl.glLightModeli(gl.GL_LIGHT_MODEL_TWO_SIDE, gl.GL_TRUE)
     gl.glEnable(gl.GL_LIGHT0)
+    gl.glEnable(gl.GL_LIGHT1)
+    # gl.glEnable(gl.GL_LIGHT2)
 
 def lightsOff():
     gl.glDisable(gl.GL_LIGHT0)
+    gl.glDisable(gl.GL_LIGHT1)
+    # gl.glDisable(gl.GL_LIGHT2)
     gl.glDisable(gl.GL_LIGHTING)
+    
+def enableDefaultMaterial()
+    color = np.array([0.5, 0.6, 0.8, 1.0])
+    mat_shininess = np.array([128])
+    mat_specular = np.array([1.0, 1.0, 1.0, 1.0]) / 4
+    gl.glMaterialfv(gl.GL_FRONT, gl.GL_DIFFUSE, color)
+    gl.glMaterialfv(gl.GL_FRONT, gl.GL_SPECULAR, mat_specular)
+    gl.glMaterialfv(gl.GL_FRONT, gl.GL_SHININESS, mat_shininess)
 
 def drawCheckerBoardOld(floorSize, squareWidthInPixel, squareHeightInPixel, SceneHeight):
     mat_specular = np.array([1.0, 1.0, 1.0, 1.0])
