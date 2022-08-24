@@ -29,9 +29,11 @@ def test(Args, TestData, Net, TestDevice):
         plt.pause(1)
 
 Parser = argparse.ArgumentParser(description='Sample code that uses the ptTools framework for training a simple MNIST classification task.')
-InputGroup = Parser.add_mutually_exclusive_group()
-InputGroup.add_argument('--mode', help='Operation mode.', choices=['train', 'test'])
-InputGroup.add_argument('--test-samples', help='Number of samples to use during testing.', default=30, type=int)
+Parser.add_argument('--mode', help='Operation mode.', choices=['train', 'test'], required=True)
+Parser.add_argument('--expt-name', help='Experiment Name', required=True)
+Parser.add_argument('--input-dir', help='Input Directory', required=True)
+Parser.add_argument('--output-dir', help='Output Directory', required=True)
+Parser.add_argument('--test-samples', help='Number of samples to use during testing.', default=30, type=int)
 
 MNISTClassTrans = transforms.Compose([
                                         # transforms.Resize((32, 32)),
